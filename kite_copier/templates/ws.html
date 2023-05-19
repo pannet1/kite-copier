@@ -1,0 +1,74 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>bypass-copier</title>
+<script>
+        const convertJsonToHtml = (dct_pos) =>{
+        let headerRowHTML
+        let allRecordsHTML
+        const table=document.getElementById("pos_table");
+        const headers = Object.keys(dct_pos[0]);
+        //Prepare html header
+        headerRowHTML='<tr>';
+        for(let i=0;i<headers.length;i++){
+            headerRowHTML+='<th>'+headers[i]+'</th>';
+        }
+        headerRowHTML+='</tr>';
+        //Prepare all the employee records as HTML
+        allRecordsHTML=''
+        for(let i=0;i<dct_pos.length;i++){
+            //Prepare html row
+            allRecordsHTML+='<tr>';
+            for(let j=0;j<headers.length;j++){
+                const header=headers[j];
+                allRecordsHTML+='<td>'+dct_pos[i][header]+'</td>';
+            }
+            allRecordsHTML+='</tr>';
+        }
+        //Append the table header and all records
+        table.innerHTML=headerRowHTML + allRecordsHTML;
+    }
+
+const ws = new WebSocket("ws://localhost:8000/ws");
+ws.onmessage = function(event) {
+  try {
+      const parsed = JSON.parse(event.data)
+        convertJsonToHtml(parsed.positions)
+  }
+  catch (err) {
+      console.log(err)
+  }
+};
+</script>
+</head>
+    <body>
+        <div class="uk-navbar-container" uk-navbar>
+            <div class="uk-navbar-center">
+                <div class="uk-navbar-center">
+                        <a href='/' class="uk-navbar-item uk-logo">home</a>
+                        <a href='/orderbook' class="uk-navbar-item uk-logo">orders</a>
+                        <a href='/positionbook' class="uk-navbar-item uk-logo">positions</a>
+                        <a href='/tradebook' class="uk-navbar-item uk-logo">trades</a>
+                </div>
+                <a href="" class="uk-navbar-item uk-logo"></a>
+                <div class="uk-navbar-center-right">…</div>
+            </div>
+        </div>
+        <div class='uk-container uk-container-small'>
+                {% block form %}
+                {% endblock form %}
+                {% block content %}
+                {% endblock content %}
+        </div>
+    </body>
+<!-- UIkit CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.15/dist/css/uikit.min.css" />
+
+<!-- UIkit JS -->
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.15/dist/js/uikit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.15/dist/js/uikit-icons.min.js"></script>
+
+</html>
+
+

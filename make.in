@@ -1,0 +1,14 @@
+oauthlib
+pyotp
+openpyxl
+webdriver_manager
+selenium
+git+https://github.com/pannet1/omspy.git
+git+https://github.com/pannet1/omspy-brokers.git
+git+https://github.com/pannet1/kiteext.git
+git+https://github.com/pannet1/toolkit.git
+kiteconnect
+python-multipart
+uvicorn[standard]
+fastapi
+jinja2
