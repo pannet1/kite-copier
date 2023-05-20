@@ -8,7 +8,6 @@ from time import sleep
 
 ignore = [
     {'product': 'CNC'},
-    {'product': 'NRML'},
     {'symbol': 'HDFC-EQ', 'exchange': 'NSE'}
 ]
 dct_lots = {'NIFTY': 50, 'BANKNIFTY': 25, 'FINNIFTY': 40}
@@ -17,7 +16,7 @@ maxlots = {'NIFTY': 900, 'BANKNIFTY': 1800, 'FINNIFTY': 1000}
 ORDER_TYPE = 'LIMIT'  # OR MARKET
 BUFF = 2              # Rs. to add/sub to LTP
 
-sec_dir = '../../../confid/'
+sec_dir = '../../../'
 logging = Logger(20, sec_dir + "kite_copier.log")  # 2nd param 'logfile.log'
 
 filename = "users_kite.xlsx"

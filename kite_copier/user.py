@@ -91,7 +91,8 @@ def load_all_users(sec_dir: str = '../../../confid/', filename='users_kite.xlsx'
         wb.save(xls_file)
     except Exception as e:
         print(f"{e} in 3/3 load_all_users")
-    return obj_ldr, users
+    else:
+        return obj_ldr, users
 
 
 if __name__ == '__main__':

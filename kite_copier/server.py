@@ -7,7 +7,7 @@ import inspect
 from user import load_all_users
 import pandas as pd
 
-sec_dir = "../../../confid/"
+sec_dir = "../../../"
 logging = Logger(20, sec_dir + "kite-copier.log")  # 2nd param 'logfile.log'
 xls_file = "users_kite.xlsx"
 
