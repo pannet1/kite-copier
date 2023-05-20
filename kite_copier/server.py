@@ -6,19 +6,20 @@ from toolkit.logger import Logger
 import inspect
 from user import load_all_users
 import pandas as pd
+import os
 
 sec_dir = "../../../"
-logging = Logger(20, sec_dir + "kite-copier.log")  # 2nd param 'logfile.log'
 xls_file = "users_kite.xlsx"
+logging = Logger(20, sec_dir + "kite-copier.log")  # 2nd param 'logfile.log'
 
 # get leader and followers instance
 obj_ldr, objs_usr = load_all_users(sec_dir, xls_file)
 
 
-pages = ['home']
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 jt = Jinja2Templates(directory="templates")
+pages = ['home']
 
 
 def delete_key_from_dict(dictionary, key_list):
