@@ -6,7 +6,6 @@ from toolkit.logger import Logger
 import inspect
 from user import load_all_users
 import pandas as pd
-import os
 
 sec_dir = "../../../"
 xls_file = "users_kite.xlsx"
@@ -65,8 +64,8 @@ async def positions(request: Request, user_id):
     ctx['tx'] = ['message']
     ctx['data'] = ['no data']
     body = []
-    for u in objs_usr:
-        lst_positions = objs_usr[u]._broker.positions
+    for user_id in objs_usr:
+        lst_positions = objs_usr[user_id]._broker.positions
         for f_dct in lst_positions:
             k = f_dct.keys()
             th = list(k)
