@@ -5,10 +5,10 @@ from login_get_kite import get_kite
 class User(object):
 
     def __init__(self, **kwargs):
-        self._userid = kwargs['userid']
-        self._multiplier = kwargs['multiplier']
-        self._max_loss: kwargs.get("max_loss")
-        self._target: kwargs.get("target")
+        self._userid = kwargs["userid"]
+        self._multiplier = kwargs["multiplier"]
+        self._max_loss = kwargs["max_loss"]
+        self._target = kwargs["max_profit"]
         self._disabled = True if isinstance(kwargs["disabled"], str) else False
         self._broker = get_kite(**kwargs)
         self._enctoken = self._broker.enctoken
@@ -77,6 +77,7 @@ def load_all_users(sec_dir: str = '../../../confid/', filename='users_kite.xlsx'
                         obj_ldr = u
                     else:
                         users[u._userid] = u
+                        print(users)
                 else:
                     print(f'{u._userid} is disabled')
                 row += 1
@@ -96,7 +97,7 @@ def load_all_users(sec_dir: str = '../../../confid/', filename='users_kite.xlsx'
 
 
 if __name__ == '__main__':
-    ma, us = load_all_users()
+    ma, us = load_all_users("../../../", "users_kite.xlsx")
     print(ma._broker.positions)
-    for u in us:
-        print(us[u])
+    for k, v in us.items():
+        print(v._max_loss)

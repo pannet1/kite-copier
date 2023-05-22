@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+      {% block content %}
+        <div class="mb-5 overflow-x-auto">
+          <table id="table" class="table w-full">
+            <thead>
+            <tr>
+            {% for k in th %}
+                <th>{{ k }}</th>
+            {% endfor %}
+                <th>operations</th>
+            </tr>
+            </thead>
+            <tbody>
+              {% for tr in data %}
+              <tr>
+               {% for v in tr %}
+                  <td>{{ v }}</td>
+                {% endfor %}
+                  <td>
+                      <a href="/positionbook/{{ data[0] | first }}">
+                          positions
+                  </td>
+              </tr>
+          </tr>
+          {% endfor %}
+
+            </tbody>
+            <tfoot>
+              <tr>
+                {% for k in th %}
+                <th id="{{ k }}"></th>
+                {% endfor %}
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+     <div class="overflow-x-auto mb-5">
+       <table class="table w-full">
+            <tr>
+            {% for k in mh %}
+                <th>{{ k }}</th>
+            {% endfor %}
+            </tr>
+            {% for tr in md %}
+            <tr>
+             {% for v in tr %}
+                <td>{{ v }}</td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+     {% endblock content %}
+
+
