@@ -14,12 +14,12 @@ def differance(s):
 
 class Copier():
 
-    def __init__(self, dct_lots: Dict) -> None:
+    def __init__(self, lotsize: Dict) -> None:
         self.lst_filter = ['exchange',
                            'symbol',
                            'product',
                            'quantity']
-        self.dct_lots = dct_lots
+        self.lotsize = lotsize
         self.ds = Datastruct()
 
     def _rounded_lot(self, df: pd.DataFrame):
@@ -28,7 +28,7 @@ class Copier():
         """
         if df.quantity == 0:
             return df.quantity
-        for k, v in self.dct_lots.items():
+        for k, v in self.lotsize.items():
             if (df.symbol).startswith(k):
                 tmp = int(df.quantity / v)
                 return tmp * v

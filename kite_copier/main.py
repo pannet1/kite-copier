@@ -10,8 +10,8 @@ ignore = [
     {'product': 'CNC'},
     {'symbol': 'HDFC-EQ', 'exchange': 'NSE'}
 ]
-dct_lots = {'NIFTY': 50, 'BANKNIFTY': 25, 'FINNIFTY': 40}
-maxlots = {'NIFTY': 900, 'BANKNIFTY': 1800, 'FINNIFTY': 1000}
+lotsize = {'NIFTY': 50, 'BANKNIFTY': 25, 'FINNIFTY': 40}
+freeze = {'NIFTY': 900, 'BANKNIFTY': 1800, 'FINNIFTY': 1000}
 
 ORDER_TYPE = 'LIMIT'  # OR MARKET
 BUFF = 2              # Rs. to add/sub to LTP
@@ -24,7 +24,7 @@ filename = "users_kite.xlsx"
 # get leader and followers instance
 obj_ldr, objs_usr = load_all_users(sec_dir, filename)
 # get copier class instance
-cop = Copier(dct_lots)
+cop = Copier(lotsize)
 # mutating combined positions followers df
 df_pos = None
 
@@ -75,9 +75,9 @@ def do_multiply(multiplied):
                 m['price'] = price[exchsym]['last_price'] + (BUFF*dir)
             m['order_type'] = ORDER_TYPE
             if m['exchange'] == 'NFO':
-                symbol = next(k for k, v in maxlots.items()
+                symbol = next(k for k, v in freeze.items()
                               if m['symbol'].startswith(k))
-                iceberg = maxlots.get(symbol, 0)
+                iceberg = freeze.get(symbol, 0)
                 if iceberg > 0 and abs(quantity) >= iceberg:
                     remainder = int(abs(quantity % iceberg) * dir)
                     if abs(remainder) > 0:
