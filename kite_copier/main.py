@@ -1,4 +1,5 @@
 from toolkit.logger import Logger
+from toolkit.fileutils import Fileutils
 from copier import Copier
 from user import load_all_users
 import pandas as pd
@@ -6,19 +7,34 @@ from datetime import datetime as dt
 from time import sleep
 
 
+sec_dir = '../../../'
+logging = Logger(20, sec_dir + "kite_copier.log")  # 2nd param 'logfile.log'
+"""
 ignore = [
     {'product': 'CNC'},
     {'symbol': 'HDFC-EQ', 'exchange': 'NSE'}
 ]
 lotsize = {'NIFTY': 50, 'BANKNIFTY': 25, 'FINNIFTY': 40}
 freeze = {'NIFTY': 900, 'BANKNIFTY': 1800, 'FINNIFTY': 1000}
+"""
+
+
+def get_lst_fm_yml():
+    futl = Fileutils()
+    yaml_file = sec_dir + "ignore.yaml"
+    ignore = futl.get_lst_fm_yml(yaml_file)
+    print(ignore)
+    lotsize = futl.get_lst_fm_yml(sec_dir + "lotsize.yaml")
+    print(f"lotsize \n {lotsize}")
+    freeze = futl.get_lst_fm_yml(sec_dir + "freeze.yaml")
+    print(freeze)
+    return ignore, lotsize, freeze
+
+
+ignore, lotsize, freeze = get_lst_fm_yml()
 
 ORDER_TYPE = 'LIMIT'  # OR MARKET
 BUFF = 2              # Rs. to add/sub to LTP
-
-sec_dir = '../../../'
-logging = Logger(20, sec_dir + "kite_copier.log")  # 2nd param 'logfile.log'
-
 filename = "users_kite.xlsx"
 
 # get leader and followers instance

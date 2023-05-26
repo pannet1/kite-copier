@@ -4,7 +4,7 @@ from tests.small import test_trades as small
 import pandas as pd
 
 
-maxlots = {'NIFTY': 250, 'BANKNIFTY': 25, 'FINNIFTY': 40}
+maxlots = {'NIFTY': 900, 'BANKNIFTY': 25, 'FINNIFTY': 40}
 ignore = [
     {'product': 'NRML'},
     {'product': 'CNC'},
@@ -23,7 +23,7 @@ df_pos = pd.DataFrame()
 if not cop.df_ldr.empty:
     for a in [[], small]:
         # pass the flwr multiplier from xls
-        df_tgt = cop.get_tgt_df(1)
+        df_tgt = cop.get_tgt_df(2.0125)
         dct_flwr = cop.filter_pos(a)
         # pass the user id from txls
         i += 1

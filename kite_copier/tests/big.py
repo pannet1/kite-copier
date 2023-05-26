@@ -24,7 +24,7 @@ test_trades = [
         "order_entry_time": 1533543811,
         "oms_order_id": "180806000046877",
         "instrument_token": "11460",
-        "quantity": 500,
+        "quantity": 950,
         "exchange_time": 1533543809,
         "exchange_order_id": "1100000004424792",
         "exchange": "NFO"

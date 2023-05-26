@@ -43,7 +43,7 @@ class User(object):
         return status
 
 
-def load_all_users(sec_dir: str = '../../../confid/', filename='users_kite.xlsx'):
+def load_all_users(sec_dir: str = '../../..', filename='users_kite.xlsx'):
     """
     Load all users in the file with broker enabled
     filename. Excel file in required xls format with
