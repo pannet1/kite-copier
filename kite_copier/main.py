@@ -7,35 +7,35 @@ from datetime import datetime as dt
 from time import sleep
 
 
+ORDER_TYPE = 'LIMIT'  # OR MARKET
+BUFF = 2              # Rs. to add/sub to LTP
+
 sec_dir = '../../../'
-logging = Logger(20, sec_dir + "kite_copier.log")  # 2nd param 'logfile.log'
-"""
-ignore = [
-    {'product': 'CNC'},
-    {'symbol': 'HDFC-EQ', 'exchange': 'NSE'}
-]
-lotsize = {'NIFTY': 50, 'BANKNIFTY': 25, 'FINNIFTY': 40}
-freeze = {'NIFTY': 900, 'BANKNIFTY': 1800, 'FINNIFTY': 1000}
-"""
+filename = "users_kite.xlsx"
+logging = Logger(20, sec_dir + "kite-copier.log")  # 2nd param 'logfile.log'
 
 
-def get_lst_fm_yml():
-    futl = Fileutils()
-    yaml_file = sec_dir + "ignore.yaml"
-    ignore = futl.get_lst_fm_yml(yaml_file)
-    print(ignore)
-    lotsize = futl.get_lst_fm_yml(sec_dir + "lotsize.yaml")
-    print(f"lotsize \n {lotsize}")
-    freeze = futl.get_lst_fm_yml(sec_dir + "freeze.yaml")
-    print(freeze)
+def get_preferences():
+    try:
+        futl = Fileutils()
+        orders_file = sec_dir + "orders.json"
+        if futl.is_file_not_2day(orders_file):
+            with open(orders_file, "w"):
+                pass
+        yaml_file = sec_dir + "ignore.yaml"
+        ignore = futl.get_lst_fm_yml(yaml_file)
+        print(ignore)
+        lotsize = futl.get_lst_fm_yml(sec_dir + "lotsize.yaml")
+        print(f"lotsize \n {lotsize}")
+        freeze = futl.get_lst_fm_yml(sec_dir + "freeze.yaml")
+        print(freeze)
+    except FileNotFoundError as e:
+        print(f"{e} while getting preferences")
     return ignore, lotsize, freeze
 
 
-ignore, lotsize, freeze = get_lst_fm_yml()
+ignore, lotsize, freeze = get_preferences()
 
-ORDER_TYPE = 'LIMIT'  # OR MARKET
-BUFF = 2              # Rs. to add/sub to LTP
-filename = "users_kite.xlsx"
 
 # get leader and followers instance
 obj_ldr, objs_usr = load_all_users(sec_dir, filename)
@@ -80,6 +80,7 @@ def do_multiply(multiplied):
             quantity = int(m.get('quantity', 0))
             if quantity == 0:
                 logging.warn('quantity cannot be zero')
+                return 0
             dir = 1 if quantity > 0 else -1
             """
             ensure that the symbol is in the max lots list
@@ -98,19 +99,18 @@ def do_multiply(multiplied):
                     remainder = int(abs(quantity % iceberg) * dir)
                     if abs(remainder) > 0:
                         m['quantity'] = remainder
-                        status = obj_usr.place_order(m)
+                        status = obj_usr.place_order(m, sec_dir)
                     times = int(abs(quantity) / iceberg)
                     for i in range(times):
                         m['quantity'] = iceberg * dir
-                        status = obj_usr.place_order(m)
-                """
-                m['quantity'] = dir * \
-                    iceberg if iceberg > 0 and abs(
-                        quantity) > iceberg else int(quantity)
-                """
-            else:
+                        status = obj_usr.place_order(m, sec_dir)
+                # quantity below freeze
+                elif iceberg > 0 and abs(quantity) < iceberg:
+                    m['quantity'] = int(quantity)
+                    status = obj_usr.place_order(m, sec_dir)
+            else:  # exchange is not NFO
                 m['quantity'] = int(quantity)
-            status = obj_usr.place_order(m)
+                status = obj_usr.place_order(m)
             logging.info(f'order: {status} {m}')
         except Exception as e:
             logging.warning(f"while multiplying {e}")

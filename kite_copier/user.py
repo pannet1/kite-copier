@@ -1,5 +1,8 @@
 from toolkit.fileutils import Fileutils
 from login_get_kite import get_kite
+import json
+import pendulum
+from time import sleep
 
 
 class User(object):
@@ -12,34 +15,54 @@ class User(object):
         self._disabled = True if isinstance(kwargs["disabled"], str) else False
         self._broker = get_kite(**kwargs)
         self._enctoken = self._broker.enctoken
+        self._last_order = {}
 
-    def place_order(self, o):
+    def _write_order(self, o, logpath):
+        try:
+            fullpath = logpath + "orders.json"
+            o["dtime"] = pendulum.now().strftime('%d-%b-%Y %H:%M:%S')
+            o["user_id"] = self._userid
+            # Open the file in append mode ('a')
+            with open(fullpath, 'a') as file:
+                # Add a newline character to separate the existing data (if any)
+                file.write('\n')
+                # Serialize and write the new data to the file
+                json.dump(o, file)
+                # Add a newline character at the end of the appended data
+                file.write('\n')
+        except Exception as e:
+            print(f"{e} error while writing to {fullpath}")
+        finally:
+            return
+
+    def place_order(self, o, logpath="./"):
         print(o)
         status = {}
         symbol = o.get('symbol')
         quantity = o.get('quantity', 0)
-        quantity = int(quantity)
-        if quantity == 0:
-            print(f"No target quantity for {symbol}")
-        else:
-            product = o.get('product')
-            exchange = o.get('exchange')
-            order_type = o.get('order_type')
-            price = o.get('price', 0)
-            if price < 0:
-                price = 0.05
-            side = 'SELL' if quantity < 0 else 'BUY'
-            order_args = dict(
-                symbol=symbol,
-                quantity=abs(quantity),
-                side=side,
-                order_type=order_type,
-                price=price,
-                exchange=exchange,
-                product=product,
-                validity='DAY'
-            )
-            status = self._broker.order_place(**order_args)
+        product = o.get('product')
+        exchange = o.get('exchange')
+        order_type = o.get('order_type')
+        price = o.get('price', 0)
+        if price < 0:
+            price = 0.05
+        side = 'SELL' if quantity < 0 else 'BUY'
+        order_args = dict(
+            symbol=symbol,
+            quantity=abs(quantity),
+            side=side,
+            order_type=order_type,
+            price=price,
+            exchange=exchange,
+            product=product,
+            validity='DAY'
+        )
+        if self._last_order == order_args:
+            print("Penguin sleeping on the iceberg :-)")
+            self._last_order = order_args
+            sleep(3)
+        status = self._broker.order_place(**order_args)
+        self._write_order(order_args, logpath)
         return status
 
 
