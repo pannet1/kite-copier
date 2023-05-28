@@ -20,16 +20,13 @@ class User(object):
     def _write_order(self, o, logpath):
         try:
             fullpath = logpath + "orders.json"
-            o["dtime"] = pendulum.now().strftime('%d-%b-%Y %H:%M:%S')
-            o["user_id"] = self._userid
-            # Open the file in append mode ('a')
+            dct_trail = {}
+            dct_trail["dtime"] = pendulum.now().strftime('%H:%M:%S')
+            dct_trail["user_id"] = self._userid
+            dct_trail.update(o)
             with open(fullpath, 'a') as file:
-                # Add a newline character to separate the existing data (if any)
                 file.write('\n')
-                # Serialize and write the new data to the file
-                json.dump(o, file)
-                # Add a newline character at the end of the appended data
-                file.write('\n')
+                json.dump(dct_trail, file)
         except Exception as e:
             print(f"{e} error while writing to {fullpath}")
         finally:
@@ -59,10 +56,10 @@ class User(object):
         )
         if self._last_order == order_args:
             print("Penguin sleeping on the iceberg :-)")
-            self._last_order = order_args
             sleep(3)
-        status = self._broker.order_place(**order_args)
+        self._last_order = order_args
         self._write_order(order_args, logpath)
+        status = self._broker.order_place(**order_args)
         return status
 
 
