@@ -30,7 +30,7 @@ class Copier():
             return df.quantity
         for k, v in self.lotsize.items():
             if (df.symbol).startswith(k):
-                tmp = int(df.quantity / v)
+                tmp = round(df.quantity / v)
                 return tmp * v
         return df.quantity
 

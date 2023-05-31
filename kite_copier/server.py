@@ -69,28 +69,26 @@ async def users(request: Request):
         ctx['data'] = body
     return jt.TemplateResponse("users.html", ctx)
 
-    """
-    lst = []
-    for u in objs_usr:
-        dictionary = vars(objs_usr[u])
-        url = "/positionbook/" + dictionary['_userid']
-        dictionary = delete_key_from_dict(dictionary, ["_enctoken", "_broker"])
-        dictionary["operations"] = "<a href='" + url + "'>"
-        lst.append(dictionary)
-    if not lst:
-        lst = [{'message': 'no data'}]
-    df = pd.DataFrame(
-        data=lst,
-        columns=lst[0].keys()
-    )
-    df.set_index(['_userid'], inplace=True)
-    df.index.name = "user id"
-    if lst_sort_col:
-        df.sort_values(by=[lst_sort_col], ascending=True, inplace=True)
-    ctx = {"request": request, "title": inspect.stack()[0][3], 'pages': pages,
-           "data": df.to_html(escape=False)}
-    return jt.TemplateResponse("pandas.html", ctx)
-    """
+
+@ app.get("/margins/", response_class=HTMLResponse)
+async def get_margins(request: Request):
+    ctx = {"request": request, "title": inspect.stack()[0][3], 'pages': pages}
+    ctx['tx'] = ['message']
+    ctx['data'] = ['no data']
+    body = []
+    for keys, rows in objs_usr.items():
+        f_dct = {"user_id": keys}
+        dct_mgn = rows._broker.margins().get("equity", {})
+        f_dct.update(dct_mgn)
+        k = f_dct.keys()
+        th = list(k)
+        v = f_dct.values()
+        td = list(v)
+        body.append(td)
+        if len(body) > 0:
+            ctx['th'] = th
+            ctx['data'] = body
+    return jt.TemplateResponse("table.html", ctx)
 
 
 @ app.get("/positionbook/{user_id}", response_class=HTMLResponse)
@@ -115,3 +113,27 @@ async def positions(request: Request, user_id):
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+"""
+lst = []
+for u in objs_usr:
+    dictionary = vars(objs_usr[u])
+    url = "/positionbook/" + dictionary['_userid']
+    dictionary = delete_key_from_dict(dictionary, ["_enctoken", "_broker"])
+    dictionary["operations"] = "<a href='" + url + "'>"
+    lst.append(dictionary)
+if not lst:
+    lst = [{'message': 'no data'}]
+df = pd.DataFrame(
+    data=lst,
+    columns=lst[0].keys()
+)
+df.set_index(['_userid'], inplace=True)
+df.index.name = "user id"
+if lst_sort_col:
+    df.sort_values(by=[lst_sort_col], ascending=True, inplace=True)
+ctx = {"request": request, "title": inspect.stack()[0][3], 'pages': pages,
+        "data": df.to_html(escape=False)}
+return jt.TemplateResponse("pandas.html", ctx)
+"""

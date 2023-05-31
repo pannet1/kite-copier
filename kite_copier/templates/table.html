@@ -40,7 +40,7 @@
           </table>
         </div>
      <div class="overflow-x-auto mb-5">
-       <table class="table w-full">
+       <table class="uk-table uk-table-striped uk-table-link">
             <tr>
             {% for k in mh %}
                 <th>{{ k }}</th>      
@@ -49,7 +49,11 @@
             {% for tr in md %}
             <tr>
              {% for v in tr %}
-                <td>{{ v }}</td>
+                {% if v is mapping or v is dict %}
+                  <td>{{ v | tojson(indent=4) }}</td>
+                {% else %}
+                  <td>{{ v }}</td>
+                {% endif %}
               {% endfor %}
             </tr>
             {% endfor %}
