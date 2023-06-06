@@ -1,0 +1,9 @@
+
+{"dtime": "21:42:13", "user_id": "DK4219", "symbol": "NIFTY2360818400PE", "quantity": 500, "side": "BUY", "order_type": "LIMIT", "price": 6.95, "exchange": "NFO", "product": "NRML", "validity": "DAY"}
+{"dtime": "21:42:13", "user_id": "DK4219", "symbol": "NIFTY2360818550CE", "quantity": 500, "side": "SELL", "order_type": "LIMIT", "price": 92.7, "exchange": "NFO", "product": "NRML", "validity": "DAY"}
+{"dtime": "21:42:14", "user_id": "DK4219", "symbol": "NIFTY2360818550PE", "quantity": 500, "side": "SELL", "order_type": "LIMIT", "price": 23.8, "exchange": "NFO", "product": "NRML", "validity": "DAY"}
+{"dtime": "21:42:14", "user_id": "DK4219", "symbol": "NIFTY2360818700CE", "quantity": 500, "side": "BUY", "order_type": "LIMIT", "price": 21.95, "exchange": "NFO", "product": "NRML", "validity": "DAY"}
+{"dtime": "21:42:15", "user_id": "DK4219", "symbol": "NIFTY2360818400PE", "quantity": 500, "side": "BUY", "order_type": "LIMIT", "price": 6.95, "exchange": "NFO", "product": "NRML", "validity": "DAY"}
+{"dtime": "21:42:15", "user_id": "DK4219", "symbol": "NIFTY2360818550CE", "quantity": 500, "side": "SELL", "order_type": "LIMIT", "price": 92.7, "exchange": "NFO", "product": "NRML", "validity": "DAY"}
+{"dtime": "21:42:15", "user_id": "DK4219", "symbol": "NIFTY2360818550PE", "quantity": 500, "side": "SELL", "order_type": "LIMIT", "price": 23.8, "exchange": "NFO", "product": "NRML", "validity": "DAY"}
+{"dtime": "21:42:15", "user_id": "DK4219", "symbol": "NIFTY2360818700CE", "quantity": 500, "side": "BUY", "order_type": "LIMIT", "price": 21.95, "exchange": "NFO", "product": "NRML", "validity": "DAY"}

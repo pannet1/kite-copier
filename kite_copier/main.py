@@ -107,10 +107,10 @@ def do_multiply(multiplied):
                 # quantity below freeze
                 elif iceberg > 0 and abs(quantity) < iceberg:
                     m['quantity'] = int(quantity)
-                    status = obj_usr.place_order(m)
+                    status = obj_usr.place_order(m, sec_dir)
             else:  # exchange is not NFO
                 m['quantity'] = int(quantity)
-                status = obj_usr.place_order(m)
+                status = obj_usr.place_order(m, sec_dir)
             logging.info(f'order: {status} {m}')
         except Exception as e:
             logging.warning(f"while multiplying {e}")
