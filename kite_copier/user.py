@@ -3,6 +3,8 @@ from login_get_kite import get_kite
 import json
 import pendulum
 from time import sleep
+import pandas as pd
+import openpyxl
 
 
 class User(object):
@@ -70,39 +72,34 @@ def load_all_users(sec_dir: str = '../../..', filename='users_kite.xlsx'):
     one row per user
     """
     try:
-        import pandas as pd
-        import openpyxl
-
         xls_file = sec_dir + filename
-        mk_empty = False
-        fu = Fileutils()
-        if fu.is_file_not_2day(xls_file):
-            mk_empty = True
         xls = pd.read_excel(xls_file).to_dict(orient='records')
-        row, lst, users, obj_ldr = 2, [], {}, None
+        if not xls:
+            raise ValueError("the xls is empty")
+        row, users, obj_ldr = 2, {}, None
+    except ValueError as ve:
+        print("Caught ValueError:", ve)
+        SystemExit()
     except Exception as e:
-        print(f"{e} 1 of 3 in load_all_users")
-    else:
-        for kwargs in xls:
-            try:
-                kwargs['sec_dir'] = sec_dir
-                """
-                if mk_empty:
-                    kwargs['enctoken'] = float('nan')
-                """
-                u = User(**kwargs)
-                if not u._disabled:
-                    lst.append(['K' + str(row), u._enctoken])
-                    if row == 2:
-                        obj_ldr = u
-                    else:
-                        users[u._userid] = u
-                        print(users)
-                else:
-                    print(f'{u._userid} is disabled')
-                row += 1
-            except Exception as e:
-                print(f"{e} in 2/3 load_all_users")
+        print(f"{e} 1 of 2 in load_all_users")
+        SystemExit()
+
+    for kwargs in xls:
+        lst = []
+        kwargs['sec_dir'] = sec_dir
+        kwargs['enctoken'] = float('nan')
+        u = User(**kwargs)
+        if not u._disabled:
+            lst.append(['K' + str(row), u._enctoken])
+            if row == 2:
+                obj_ldr = u
+            else:
+                users[u._userid] = u
+                print(users)
+        else:
+            print(f'{u._userid} is disabled')
+        row += 1
+
     try:
         wb = openpyxl.load_workbook(xls_file)
         ws = wb['Sheet1']
@@ -111,7 +108,7 @@ def load_all_users(sec_dir: str = '../../..', filename='users_kite.xlsx'):
             ws[addr] = enc
         wb.save(xls_file)
     except Exception as e:
-        print(f"{e} in 3/3 load_all_users")
+        print(f"{e} in 2/2 load_all_users")
     else:
         return obj_ldr, users
 
