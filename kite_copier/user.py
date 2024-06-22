@@ -65,7 +65,7 @@ class User(object):
         return status
 
 
-def load_all_users(sec_dir: str = '../../..', filename='users_kite.xlsx'):
+def load_all_users(sec_dir: str = '../../', filename='users_kite.xls'):
     """
     Load all users in the file with broker enabled
     filename. Excel file in required xls format with
@@ -76,26 +76,22 @@ def load_all_users(sec_dir: str = '../../..', filename='users_kite.xlsx'):
         xls = pd.read_excel(xls_file).to_dict(orient='records')
         if not xls:
             raise ValueError("the xls is empty")
-        row, users, obj_ldr = 2, {}, None
+        row, users = 2, {}
     except ValueError as ve:
         print("Caught ValueError:", ve)
-        SystemExit()
+        exit(1)
     except Exception as e:
         print(f"{e} 1 of 2 in load_all_users")
-        SystemExit()
+        exit(1)
 
+    lst = []
     for kwargs in xls:
-        lst = []
         kwargs['sec_dir'] = sec_dir
         kwargs['enctoken'] = float('nan')
         u = User(**kwargs)
         if not u._disabled:
-            lst.append(['K' + str(row), u._enctoken])
-            if row == 2:
-                obj_ldr = u
-            else:
-                users[u._userid] = u
-                print(users)
+            lst.append(['I' + str(row), u._enctoken])
+            users[u._userid] = u
         else:
             print(f'{u._userid} is disabled')
         row += 1
@@ -110,11 +106,11 @@ def load_all_users(sec_dir: str = '../../..', filename='users_kite.xlsx'):
     except Exception as e:
         print(f"{e} in 2/2 load_all_users")
     else:
-        return obj_ldr, users
+        return users
 
 
 if __name__ == '__main__':
-    ma, us = load_all_users("../../../", "users_kite.xlsx")
+    ma, us = load_all_users("../", "users_kite.xls")
     print(ma._broker.positions)
     for k, v in us.items():
         print(v._max_loss)
