@@ -65,7 +65,7 @@ class User(object):
         return status
 
 
-def load_all_users(sec_dir: str = '../', filename='users_kite.xlsx'):
+def load_all_users(sec_dir: str = '../../', filename='users_kite.xls'):
     """
     Load all users in the file with broker enabled
     filename. Excel file in required xls format with
@@ -110,7 +110,7 @@ def load_all_users(sec_dir: str = '../', filename='users_kite.xlsx'):
 
 
 if __name__ == '__main__':
-    ma, us = load_all_users("../", "users_kite.xlsx")
+    ma, us = load_all_users("../", "users_kite.xls")
     print(ma._broker.positions)
     for k, v in us.items():
         print(v._max_loss)
