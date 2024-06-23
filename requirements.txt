@@ -129,7 +129,7 @@ pytz==2023.3
     # via pandas
 pytzdata==2020.1
     # via pendulum
-pyyaml==5.4.1
+pyyaml
     # via
     #   omspy
     #   uvicorn
@@ -191,8 +191,6 @@ urllib3[socks]==2.0.2
     #   selenium
 uvicorn[standard]==0.22.0
     # via -r requirements.in
-uvloop==0.17.0
-    # via uvicorn
 watchfiles==0.19.0
     # via uvicorn
 webdriver-manager==3.8.6

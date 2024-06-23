@@ -4,8 +4,6 @@ from omspy.brokers.zerodha import Zerodha
 
 
 def get_kite(**kwargs):
-    kwargs.update(
-        {"tokpath": kwargs["sec_dir"] + kwargs["userid"] + ".txt"})
     if kwargs.get("api_type") == "bypass":
         return get_bypass(**kwargs)
     else:
@@ -23,9 +21,10 @@ def get_bypass(**kwargs):
                 enctoken = tf.read()
                 print(f'enctoken sent to broker {enctoken}')
         print(kwargs)
-        bypass = Bypass(kwargs['userid'],
-                        kwargs['password'],
-                        kwargs['totp'],
+        bypass = Bypass(userid=kwargs['userid'],
+                        password=kwargs['password'],
+                        totp=kwargs['totp'],
+                        tokpath=kwargs['tokpath'],
                         enctoken=enctoken,
                         )
         if bypass.authenticate():

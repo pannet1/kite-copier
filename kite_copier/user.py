@@ -1,10 +1,27 @@
 from toolkit.fileutils import Fileutils
 from login_get_kite import get_kite
+import kiteconnect
 import json
 import pendulum
 from time import sleep
 import pandas as pd
 import openpyxl
+
+
+def custom_exception_handler(func):
+    """
+    Decorate to handle common exceptions.
+    """
+    def wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except kiteconnect.exceptions.TokenException:
+            self.check_enctoken()
+            # Retry the original method
+            return func(self, *args, **kwargs)
+        except Exception as e:
+            print(f"Exception: {e}")
+    return wrapper
 
 
 class User(object):
@@ -63,9 +80,43 @@ class User(object):
         self._write_order(order_args, logpath)
         status = self._broker.order_place(**order_args)
         return status
+    
+    def __clean_data(self, data: list) -> list:
+        dlen = len(data)
+        if dlen > 1: return data
+        elif dlen == 1 and len(data[0].keys()) != 0: return data
+        else: return []
+
+    @custom_exception_handler
+    def get_orders(self, order_id=None) -> list:
+        if order_id is not None:
+            data: list = self._broker.kite.order_history(order_id=order_id)
+        else:
+            data: list = self._broker.kite.orders()
+        return self.__clean_data(data)    
+
+    @custom_exception_handler
+    def get_positions(self) -> list:
+        return self.__clean_data(self._broker.positions)
+    
+    @custom_exception_handler
+    def get_margins(self) -> list:
+        return self.__clean_data(self._broker.margins)
+    
+    @custom_exception_handler
+    def check_enctoken(self) -> None:
+        if self._broker.enctoken is None:
+            self._broker.get_enctoken()
+            self._broker.kite.set_headers(self._broker.enctoken, self._userid)
+            if self._broker.enctoken is None:
+                raise Exception('Token Expired or invalid...')
+        else:
+            print(f'!!! Enctoken Expired, Trying to Logging Again for User: {self._userid}') 
+            self._broker.get_enctoken()
+            self._broker.kite.set_headers(self._broker.enctoken, self._userid)
 
 
-def load_all_users(sec_dir: str = '../../', filename='users_kite.xls'):
+def load_all_users(sec_dir: str = '../../', filename='users_kite.xlsx'):
     """
     Load all users in the file with broker enabled
     filename. Excel file in required xls format with
@@ -75,7 +126,7 @@ def load_all_users(sec_dir: str = '../../', filename='users_kite.xls'):
         xls_file = sec_dir + filename
         xls = pd.read_excel(xls_file).to_dict(orient='records')
         if not xls:
-            raise ValueError("the xls is empty")
+            raise ValueError("the xlsx is empty")
         row, users = 2, {}
     except ValueError as ve:
         print("Caught ValueError:", ve)
@@ -87,6 +138,7 @@ def load_all_users(sec_dir: str = '../../', filename='users_kite.xls'):
     lst = []
     for kwargs in xls:
         kwargs['sec_dir'] = sec_dir
+        kwargs['tokpath'] = f"{sec_dir}{kwargs['userid']}.txt"
         kwargs['enctoken'] = float('nan')
         u = User(**kwargs)
         if not u._disabled:
@@ -110,7 +162,7 @@ def load_all_users(sec_dir: str = '../../', filename='users_kite.xls'):
 
 
 if __name__ == '__main__':
-    ma, us = load_all_users("../", "users_kite.xls")
+    ma, us = load_all_users("../../", "users_kite.xlsx")
     print(ma._broker.positions)
     for k, v in us.items():
         print(v._max_loss)

@@ -7,7 +7,7 @@
             {% for k in th %}
                 <th>{{ k }}</th>
             {% endfor %}
-                <th>operations</th>
+                <th>Operations</th>
             </tr>
             </thead>
             <tbody>
@@ -17,8 +17,15 @@
                   <td>{{ v }}</td>
                 {% endfor %}
                   <td>
-                      <a href="/positionbook/{{ data[0] | first }}">
-                          positions
+                    <a href="/position/{{ data[0] | first }}">
+                      <button type="button">Show Positions</button>
+                    </a>
+                    <a href="/order/{{ data[0] | first }}">
+                      <button type="button">Show Orders</button>
+                    </a>
+                    <a href="/margin/{{ data[0] | first }}">
+                      <button type="button">Show Margin</button>
+                    </a>
                   </td>
               </tr>
           </tr>
