@@ -30,9 +30,11 @@ def get_bypass(**kwargs):
         if bypass.authenticate():
             if not enctoken:
                 enctoken = bypass.kite.enctoken
+            if enctoken:
                 with open(tokpath, 'w') as tw:
-                    tw.write(enctoken)
                     print("writing enctoken to file")
+                    tw.write(enctoken)
+            else: print(f'Not able to get or generate enctoken for {bypass.userid}, check your credentials...')
     except Exception as e:
         print(f"unable to create bypass object {e}")
     else:

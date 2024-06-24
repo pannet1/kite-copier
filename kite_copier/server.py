@@ -3,17 +3,21 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from toolkit.logger import Logger
+from toolkit.fileutils import Fileutils
 from user import load_all_users, User
 from typing import List, Dict
 import inspect
 
-sec_dir = "../../"
-logging = Logger(20, sec_dir + "kite-copier.log")  # 2nd param 'logfile.log'
+data_dir = "../data/"
+sec_dir = "../"
+# create directory...
+Fileutils().is_mk_filepath(data_dir)
+logging = Logger(20, data_dir + "kite-copier.log")  # 2nd param 'logfile.log'
 
 
-def return_users() -> Dict[User]:
+def return_users() -> Dict[str, User]:
     xls_file = "users_kite.xlsx"
-    objs_usr = load_all_users(sec_dir, xls_file)
+    objs_usr = load_all_users(sec_dir, data_dir, xls_file)
     return objs_usr
 
 

@@ -51,7 +51,7 @@ class User(object):
         finally:
             return
 
-    def place_order(self, o, logpath="./"):
+    def place_order(self, o, logpath="../data/"):
         print(o)
         status = {}
         symbol = o.get('symbol')
@@ -116,7 +116,7 @@ class User(object):
             self._broker.kite.set_headers(self._broker.enctoken, self._userid)
 
 
-def load_all_users(sec_dir: str = '../../', filename='users_kite.xlsx'):
+def load_all_users(sec_dir: str = '../../', data_dir: str = '../data/', filename='users_kite.xlsx'):
     """
     Load all users in the file with broker enabled
     filename. Excel file in required xls format with
@@ -126,7 +126,7 @@ def load_all_users(sec_dir: str = '../../', filename='users_kite.xlsx'):
         xls_file = sec_dir + filename
         xls = pd.read_excel(xls_file).to_dict(orient='records')
         if not xls:
-            raise ValueError("the xlsx is empty")
+            raise ValueError(f"Excel file {filename} is empty...")
         row, users = 2, {}
     except ValueError as ve:
         print("Caught ValueError:", ve)
@@ -136,11 +136,15 @@ def load_all_users(sec_dir: str = '../../', filename='users_kite.xlsx'):
         exit(1)
 
     lst = []
-    for kwargs in xls:
-        kwargs['sec_dir'] = sec_dir
-        kwargs['tokpath'] = f"{sec_dir}{kwargs['userid']}.txt"
-        kwargs['enctoken'] = float('nan')
-        u = User(**kwargs)
+    for user in xls:
+        # Data Check.
+        exist = all(key in user for key in ('userid', 'api_type', 'password', 'totp'))
+        if not exist:
+            print('Make sure that excel file has userid, api_type, password & totp fields & their values. Exiting the program...')
+            exit(1)
+        user['sec_dir'] = data_dir
+        user['tokpath'] = f"{data_dir}{user['userid']}.txt"
+        u = User(**user)
         if not u._disabled:
             lst.append(['I' + str(row), u._enctoken])
             users[u._userid] = u
