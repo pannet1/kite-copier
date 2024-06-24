@@ -29,7 +29,7 @@ def delete_key_from_dict(dictionary, key_list):
 
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 jt = Jinja2Templates(directory="templates")
 pages = ['home']
 objs_usr = return_users()
