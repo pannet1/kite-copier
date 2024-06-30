@@ -1,5 +1,45 @@
 {% extends "base.html" %}
-{% block content %}
-<table id="pos_table" class='uk-table'> 
-</table>
-{% endblock content %}
+      {% block content %}
+        <div class="mb-5 overflow-x-auto">
+          <table id="table" class="table w-full">
+            <thead>
+            <tr>
+            {% for key in body[0].keys() %}
+                <th>{{ key }}</th>
+            {% endfor %}
+            <th>cancel</th>
+            <th>positions</th>
+            </tr>
+            </thead>
+            <tbody>
+              {% for user in body %}
+              <tr>
+                <td>
+                  {{ user.userid}}
+                </td>
+                <td>
+                    <a class="link-primary" href="/orders?userid={{ user.userid }}">
+                      {{ user.orders }}
+                      </a>
+                </td>
+                <td>
+                    <a class="link-primary" href="/positions?userid={{ user.userid }}">
+                      {{ user.pnl}}
+                    </a>
+                </td>
+                  <td>
+                    <a class="btn btn-sm btn-circle btn-error" href="/remove-user/?userid={{ user.userid }}">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </a>
+                  </td>
+                  <td>
+                    <a class="btn btn-sm btn-error" href="/close-all/?userid={{ user.userid }}">
+                      close
+                    </a>
+                  </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+     {% endblock content %}

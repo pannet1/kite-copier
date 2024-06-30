@@ -1,4 +1,3 @@
-from toolkit.fileutils import Fileutils
 from login_get_kite import get_kite
 import kiteconnect
 import json
@@ -12,6 +11,7 @@ def custom_exception_handler(func):
     """
     Decorate to handle common exceptions.
     """
+
     def wrapper(self, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
@@ -21,16 +21,14 @@ def custom_exception_handler(func):
             return func(self, *args, **kwargs)
         except Exception as e:
             print(f"Exception: {e}")
+
     return wrapper
 
 
 class User(object):
-
     def __init__(self, **kwargs):
         self._userid = kwargs["userid"]
         self._multiplier = kwargs["multiplier"]
-        self._max_loss = kwargs["max_loss"]
-        self._target = kwargs["max_profit"]
         self._disabled = True if isinstance(kwargs["disabled"], str) else False
         self._broker = get_kite(**kwargs)
         self._enctoken = self._broker.enctoken
@@ -40,11 +38,11 @@ class User(object):
         try:
             fullpath = logpath + "orders.json"
             dct_trail = {}
-            dct_trail["dtime"] = pendulum.now().strftime('%H:%M:%S')
+            dct_trail["dtime"] = pendulum.now().strftime("%H:%M:%S")
             dct_trail["user_id"] = self._userid
             dct_trail.update(o)
-            with open(fullpath, 'a') as file:
-                file.write('\n')
+            with open(fullpath, "a") as file:
+                file.write("\n")
                 json.dump(dct_trail, file)
         except Exception as e:
             print(f"{e} error while writing to {fullpath}")
@@ -54,15 +52,15 @@ class User(object):
     def place_order(self, o, logpath="../data/"):
         print(o)
         status = {}
-        symbol = o.get('symbol')
-        quantity = o.get('quantity', 0)
-        product = o.get('product')
-        exchange = o.get('exchange')
-        order_type = o.get('order_type')
-        price = o.get('price', 0)
+        symbol = o.get("symbol")
+        quantity = o.get("quantity", 0)
+        product = o.get("product")
+        exchange = o.get("exchange")
+        order_type = o.get("order_type")
+        price = o.get("price", 0)
         if price < 0:
             price = 0.05
-        side = 'SELL' if quantity < 0 else 'BUY'
+        side = "SELL" if quantity < 0 else "BUY"
         order_args = dict(
             symbol=symbol,
             quantity=abs(quantity),
@@ -71,7 +69,7 @@ class User(object):
             price=price,
             exchange=exchange,
             product=product,
-            validity='DAY'
+            validity="DAY",
         )
         if self._last_order == order_args:
             print("Penguin sleeping on the iceberg :-)")
@@ -80,12 +78,15 @@ class User(object):
         self._write_order(order_args, logpath)
         status = self._broker.order_place(**order_args)
         return status
-    
+
     def __clean_data(self, data: list) -> list:
         dlen = len(data)
-        if dlen > 1: return data
-        elif dlen == 1 and len(data[0].keys()) != 0: return data
-        else: return []
+        if dlen > 1:
+            return data
+        elif dlen == 1 and len(data[0].keys()) != 0:
+            return data
+        else:
+            return []
 
     @custom_exception_handler
     def get_orders(self, order_id=None) -> list:
@@ -93,30 +94,34 @@ class User(object):
             data: list = self._broker.kite.order_history(order_id=order_id)
         else:
             data: list = self._broker.kite.orders()
-        return self.__clean_data(data)    
+        return self.__clean_data(data)
 
     @custom_exception_handler
     def get_positions(self) -> list:
         return self.__clean_data(self._broker.positions)
-    
+
     @custom_exception_handler
     def get_margins(self) -> list:
         return self.__clean_data(self._broker.margins)
-    
+
     @custom_exception_handler
     def check_enctoken(self) -> None:
         if self._broker.enctoken is None:
             self._broker.get_enctoken()
             self._broker.kite.set_headers(self._broker.enctoken, self._userid)
             if self._broker.enctoken is None:
-                raise Exception('Token Expired or invalid...')
+                raise Exception("Token Expired or invalid...")
         else:
-            print(f'!!! Enctoken Expired, Trying to Logging Again for User: {self._userid}') 
+            print(
+                f"!!! Enctoken Expired, Trying to Logging Again for User: {self._userid}"
+            )
             self._broker.get_enctoken()
             self._broker.kite.set_headers(self._broker.enctoken, self._userid)
 
 
-def load_all_users(sec_dir: str = '../../', data_dir: str = '../data/', filename='users_kite.xlsx'):
+def load_all_users(
+    sec_dir: str = "../../", data_dir: str = "../data/", filename="users_kite.xlsx"
+):
     """
     Load all users in the file with broker enabled
     filename. Excel file in required xls format with
@@ -124,7 +129,7 @@ def load_all_users(sec_dir: str = '../../', data_dir: str = '../data/', filename
     """
     try:
         xls_file = sec_dir + filename
-        xls = pd.read_excel(xls_file).to_dict(orient='records')
+        xls = pd.read_excel(xls_file).to_dict(orient="records")
         if not xls:
             raise ValueError(f"Excel file {filename} is empty...")
         row, users = 2, {}
@@ -138,23 +143,25 @@ def load_all_users(sec_dir: str = '../../', data_dir: str = '../data/', filename
     lst = []
     for user in xls:
         # Data Check.
-        exist = all(key in user for key in ('userid', 'api_type', 'password', 'totp'))
+        exist = all(key in user for key in ("userid", "api_type", "password", "totp"))
         if not exist:
-            print('Make sure that excel file has userid, api_type, password & totp fields & their values. Exiting the program...')
+            print(
+                "Make sure that excel file has userid, api_type, password & totp fields & their values. Exiting the program..."
+            )
             exit(1)
-        user['sec_dir'] = data_dir
-        user['tokpath'] = f"{data_dir}{user['userid']}.txt"
+        user["sec_dir"] = data_dir
+        user["tokpath"] = f"{data_dir}{user['userid']}.txt"
         u = User(**user)
         if not u._disabled:
-            lst.append(['I' + str(row), u._enctoken])
+            lst.append(["I" + str(row), u._enctoken])
             users[u._userid] = u
         else:
-            print(f'{u._userid} is disabled')
+            print(f"{u._userid} is disabled")
         row += 1
 
     try:
         wb = openpyxl.load_workbook(xls_file)
-        ws = wb['Sheet1']
+        ws = wb["Sheet1"]
         tpl = tuple(lst)
         for addr, enc in tpl:
             ws[addr] = enc
@@ -165,7 +172,7 @@ def load_all_users(sec_dir: str = '../../', data_dir: str = '../data/', filename
         return users
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ma, us = load_all_users("../../", "users_kite.xlsx")
     print(ma._broker.positions)
     for k, v in us.items():

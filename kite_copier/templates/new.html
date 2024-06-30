@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{%  block form  %}
+<form method='post' action='/orders/' id="frm" autocomplete="off" class="mx-auto p-5 bg-red-300 w-full max-w-lg">
+
+  <div class="btn-group">
+    <input type="radio" name="ptype" value="1" data-title="NRML" class="btn btn-sm" checked />
+    <input type="radio" name="ptype" value="2" data-title="MIS" class="btn btn-sm"  />
+    <input type="radio" name="ptype" value="3" data-title="CNC" class="btn btn-sm" />
+    &nbsp; &nbsp; &nbsp;
+    <input type="radio" name="otype" value="1" data-title="LMT" class="btn btn-sm" checked />
+    <input type="radio" name="otype" value="2" data-title="MKT" class="btn btn-sm"  />
+    <input type="radio" name="otype" value="3" data-title="SL" class="btn btn-sm" />
+    <input type="radio" name="otype" value="4" data-title="SL-M" class="btn btn-sm" />
+  </div>
+  <div class="form-control autocomplete relative inline-block w-full">
+    <label class="label">
+      <span class="label-text">Trading Symbol</span>
+    </label>
+    <input id="symbol" name="symbol" type="text" class="input input-sm input-bordered" style="width:81%">
+    <input id="exchange" name="exchange" type="text" readonly="readonly" class="input input-sm input-ghost float-right" style="width:4.5rem" />
+    <input id="token" name="token" type="hidden" />
+  </div>
+  <div class="form-control relative inline-block">
+    <label class="label">
+      <span class="label-text">Price</span>
+      <span class="label-text">Trigger Price</span>
+    </label>
+    <input type="text" id="price" name="price" class="input input-sm input-bordered" style="width:49%"/>
+    <input type="text" id="trigger" name="trigger" class="input input-sm input-bordered float-right" style="width:49%"/>
+  </div>
+  <div class="form-control">
+    <label class="label">
+      <span class="label-text-alt">Lot size:</span>
+      <span id="lotsize" name="lotsize" class="label-text-alt"></span>
+    </label>
+  </div>
+<div class="form-control">
+  <label class="label cursor-pointer">
+    <span class="label-text text-lg">SELL</span>
+    <input id="txn" type="checkbox" name="txn" class="toggle toggle-lg bg-red-300 checked:bg-green-500"/>
+    <span class="label-text text-lg">BUY</span>
+  </label>
+</div>
+{% endblock form %}
+
+{% block content %}
+  {% if body %}
+  <table class="mx-auto table">
+    <tbody>
+      {% for dct in body %}
+    <tr>
+        <td>
+          <label class="label">{{ dct.userid }}&nbsp
+          <input name="qty" type="number" class="input input-primary input-bordered input-sm" min="0" value="0"/>
+          </label>
+        </td>
+      </tr>
+      {% endfor %}
+        <td colspan="3">
+          <input type="submit" class="btn btn-primary btn-outline btn-block" value="SEND"/>
+        </td>
+      </tr>
+    </table>
+</form>
+{% endif %}
+{% endblock content %}

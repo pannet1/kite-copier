@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+      {% block content %}
+        <div class="mb-5 overflow-x-auto">
+          {% if body %}
+            <table id="table" class="table w-full">
+              <thead>
+              <tr>
+              {% for key in body[0].keys() %}
+                  <th>{{ key }}</th>
+              {% endfor %}
+              </tr>
+              </thead>
+              <tbody>
+                {% for dct in body %}
+                <tr>
+                  <td>{{  dct.userid}}</td>
+                  <td>{{  dct.exchange}}</td>
+                  <td>{{  dct.symbol}}</td>
+                  <td>{{  dct.product}}</td>
+                  <td>{{  dct.side}}</td>
+                  <td>{{  dct.quantity}}</td>
+                  <td>
+                    <div class="text-bold text-lg bg-clip-content bg-gray-300 text-black text-center">
+                  {{  dct.pnl}}
+                    </div>
+                  </td>
+                  {% if dct.pnl | float < 0 %}
+                  <td>
+                    <div class="text-bold text-lg bg-clip-content text-error text-center">
+                  {% else %}
+                  <td>
+                    <div class="text-bold text-lg bg-clip-content bg-success text-white text-center">
+                  {% endif %}
+                    {{  dct.m2m | int}}
+                    </div>
+                  </td>
+                </tr>
+            {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+          <div class="hero min-h-screen" style="background-image: url(./static/no_data.jpg);">
+            <div class="hero-overlay bg-blend-overlay"></div>
+            <div class="hero-content text-center text-neutral-content">
+              <div class="max-w-md">
+                <h1 class="mb-5 text-5xl font-bold">Happy Trading</h1>
+                <p class="mb-5">Are you ready to play today</p>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+     {% endblock content %}
+

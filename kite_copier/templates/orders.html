@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+      {% block content %}
+        <div class="mb-5 overflow-x-auto">
+          {% if body %}
+          <table id="table" class="table w-full">
+            <thead>
+            <tr>
+            {% for key in body[0].keys() %}
+                <th>{{ key }}</th>
+            {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+              {% for dct in body %}
+              <tr>
+                <td>{{  dct.userid }}</td>
+                <td>{{  dct.order_id }}</td>
+                <td>{{  dct.exchange }}</td>
+                <td>{{  dct.tradingsymbol }}</td>
+                <td>{{  dct.quantity }}</td>
+                <td>{{  dct.product }}</td>
+                <td>{{  dct.price }}</td>
+                <td>{{  dct.trigger_price }}</td>
+                <td>{{  dct.order_type }}</td>
+                <td>
+                  {% if dct.transaction_type == 'BUY' %}
+                  <div class="text-bold text-lg bg-clip-content bg-success text-white text-center">
+                  {% else %}
+                  <div class="text-bold text-lg bg-clip-content bg-error text-white text-center">
+                  {% endif %}
+                    {{  dct.transaction_type }}
+                  </div>
+                </td>
+                <td>
+                    {% if dct.status == 'REJECTED' %}
+                    <div class="badge badge-error">
+                    {% elif dct.status == 'COMPLETE' %}
+                    <div class="badge badge-success">
+                    {% else %}
+                    <div class="badge">
+                    {% endif %}
+                    {{  dct.status }}
+                    </div>
+                </td>
+                <td>
+                {% if dct.status_message == None %}
+                  &nbsp;
+                  {% else %}
+                  <div class="tooltip tooltip-error" 
+                  data-tip="{{  dct.status_message }}">
+                  <button class="btn btn-xs btn-error">?</button>
+                  </div>
+                {% endif %}
+                </td>
+              </tr>
+          </tr>
+          {% endfor %}
+
+            </tbody>
+            <tfoot>
+              <tr>
+
+              </tr>
+            </tfoot>
+          </table>
+        {% else %}
+          <div class="hero min-h-screen" style="background-image: url(./static/no_data.jpg);">
+            <div class="hero-overlay bg-blend-overlay"></div>
+            <div class="hero-content text-center text-neutral-content">
+              <div class="max-w-md">
+                <h1 class="mb-5 text-5xl font-bold">Happy Trading</h1>
+                <p class="mb-5">Are you ready to play today</p>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        </div>
+     {% endblock content %}
+
+
