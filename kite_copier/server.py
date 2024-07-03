@@ -1,10 +1,10 @@
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from toolkit.logger import Logger
 from toolkit.fileutils import Fileutils
-from user import load_all_users, User
+from user import load_all_users, User, load_symbol_data
 from typing import List, Dict, Optional
 import starlette.status as status
 import inspect
@@ -16,6 +16,8 @@ sec_dir = "../../"
 Fileutils().is_mk_filepath(data_dir)
 logging = Logger(20, data_dir + "kite-copier.log")  # 2nd param 'logfile.log'
 
+# Load Instrument file.
+pd = load_symbol_data(data_dir)
 
 def return_users() -> Dict[str, User]:
     xls_file = "users_kite.xlsx"
@@ -68,7 +70,10 @@ async def home(request: Request):
         dct = {}
         # Completed Orders Count.
         dct["userid"] = user._userid
-        dct["orders"] = len(get_all_orders(user._userid))
+        odrs = get_all_orders(user._userid)
+        if odrs:
+            dct["orders"] = len(get_all_orders(user._userid))
+        else: dct["orders"] = 0
         # Pnl Count.
         poss = user.get_positions()
         pnl = 0
@@ -135,6 +140,7 @@ async def positions(request: Request):
     ctx["body"] = []
     for uid, user in objs_usr.items():
         lst = user.get_positions()
+        if not lst: continue
         lst = [{key: dct[key] for key in keys} for dct in lst]
         if any(lst):
             lst = [{"userid": uid, **dct} for dct in lst]
@@ -185,12 +191,21 @@ def orders(request: Request):
     ]
     for uuid, user in objs_usr.items():
         lst = user.get_orders()
+        if not lst: continue
         lst = [{key: dct[key] for key in keys} for dct in lst]
         if any(lst):
             lst = [{"userid": uuid, **dct} for dct in lst]
             ctx["body"].extend(lst)
     print(ctx["body"])
     return jt.TemplateResponse("orders.html", ctx)
+
+
+@app.get("/search")
+async def search(request: Request, sym: str):
+    # dt = pd[pd.tradingsymbol.str.contains(sym.upper())]
+    dt = pd[pd.tradingsymbol.str.startswith(sym.upper())]
+    data = dt[:15].to_dict(orient='records')
+    return data
 
 
 """
@@ -202,67 +217,60 @@ def orders(request: Request):
 async def post_orders(
     request: Request,
     qty: List[int],
-    client_name: List[str],
+    userid: List[str],
     symbol: str = Form(),
-    token: str = Form(),
     txn: Optional[str] = Form("off"),
     exchange: str = Form(),
-    ptype: int = Form("0"),
-    otype: int = Form("0"),
-    price: float = Form(),
+    product: str = Form(),
+    order: str = Form(),
+    price: float = Form(0.0),
     lotsize: int = Form("1"),
-    trigger: float = Form(),
+    trigger: float = Form(0.0),
 ):
     """
     places orders for all clients
     """
-    mh, md, th, td = [], [], [], []
-    for i in range(len(client_name)):
-        obj_client = get_broker_by_id(client_name[i])
-        if qty[i] > 0:
-            txn_type = "BUY" if txn == "on" else "SELL"
-            if otype == 1:
-                ordertype = "LIMIT"
-                variety = "NORMAL"
-            elif otype == 2:
-                ordertype = "MARKET"
-                variety = "NORMAL"
-                price = 0
-            elif otype == 3:
-                ordertype = "STOPLOSS_LIMIT"
-                variety = "STOPLOSS"
-            elif otype == 4:
-                ordertype = "STOPLOSS_MARKET"
-                variety = "STOPLOSS"
-
-            if ptype == 1:
-                producttype = "CARRYFORWARD"
-            elif ptype == 2:
-                producttype = "INTRADAY"
-            elif ptype == 3:
-                producttype = "DELIVERY"
-            params = {
-                "variety": variety,
-                "tradingsymbol": symbol,
-                "symboltoken": token,
-                "transactiontype": txn_type,
-                "exchange": exchange,
-                "ordertype": ordertype,
-                "producttype": producttype,
-                "duration": "DAY",
-                "price": str(price),
-                "triggerprice": str(trigger),
-                "quantity": str(qty[i]),
-            }
-            mh, md, th, td = order_place_by_user(obj_client, params)
     ctx = {"request": request, "title": inspect.stack()[0][3], "pages": pages}
-    if len(mh) > 0:
-        ctx["mh"], ctx["md"] = mh, md
-        if len(th) > 0:
-            ctx["th"], ctx["data"] = th, td
-        return jt.TemplateResponse("table.html", ctx)
-    else:
-        return RedirectResponse("/orders", status_code=status.HTTP_302_FOUND)
+    mh, md, th, td = [], [], [], []
+    side = "BUY" if txn == "on" else "SELL"
+    if not order.upper() in ('MARKET', 'LIMIT', 'SL', 'SL-M'):
+        # here can return error to user if orderType is not valid
+        pass
+    
+    if not product.upper() in ('NRML', 'MIS', 'CNC'):
+        # here can return error to user if orderType is not valid
+        pass
+
+    params = {
+        "symbol": symbol,
+        "exchange": exchange,
+        "transactionType": side,
+        "orderType": order.upper(),
+        "product": product.upper(),
+        "price": price,
+        "triggerPrice": trigger,
+    }
+
+    data = []
+    for i, uid in enumerate(userid):
+        user = get_user_by_id(uid)
+        if user and qty[i] > 0:
+            params["quantity"] = qty[i]
+            try:
+                dt = user.place_order(params)
+                data.append(dt)
+            except Exception as e:
+                data = str(e)
+                break
+            # if len(mh) > 0:
+                # ctx["mh"], ctx["md"] = mh, md
+                # if len(th) > 0:
+                    # ctx["th"], ctx["data"] = th, td
+        # return jt.TemplateResponse("table.html", ctx)
+    return HTMLResponse(str(data))
+    # else:
+        # return RedirectResponse("/orders", status_code=status.HTTP_302_FOUND)
+
 
 
 if __name__ == "__main__":

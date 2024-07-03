@@ -2,9 +2,11 @@ from login_get_kite import get_kite
 import kiteconnect
 import json
 import pendulum
+from datetime import datetime as dtime, timezone
 from time import sleep
 import pandas as pd
 import openpyxl
+import os
 
 
 def custom_exception_handler(func):
@@ -50,25 +52,25 @@ class User(object):
             return
 
     def place_order(self, o, logpath="../data/"):
-        print(o)
-        status = {}
         symbol = o.get("symbol")
+        exchange = o.get("exchange")
+        side = o.get("transactionType")
+        orderType = o.get("orderType")
         quantity = o.get("quantity", 0)
         product = o.get("product")
-        exchange = o.get("exchange")
-        order_type = o.get("order_type")
         price = o.get("price", 0)
-        if price < 0:
+        triggerPrice = o.get("triggerPrice", 0)
+        if price < 0: 
             price = 0.05
-        side = "SELL" if quantity < 0 else "BUY"
         order_args = dict(
             symbol=symbol,
-            quantity=abs(quantity),
-            side=side,
-            order_type=order_type,
-            price=price,
             exchange=exchange,
+            side=side,
+            order_type=orderType,
+            quantity=abs(quantity),
             product=product,
+            price=price,
+            trigger_price=triggerPrice,
             validity="DAY",
         )
         if self._last_order == order_args:
@@ -170,6 +172,29 @@ def load_all_users(
         print(f"{e} in 2/2 load_all_users")
     else:
         return users
+
+
+def load_symbol_data(data_dir):
+    fpath = data_dir + 'instrument.csv'
+    if os.path.exists(fpath):
+        ttm = dtime.now(timezone.utc)
+        ftm = dtime.fromtimestamp(os.path.getctime(fpath), timezone.utc)
+        if(ttm.date() == ftm.date()) or (ttm.hour < 3):
+            # Reading File if today's file or before 8:30AM IST (3AM UTC).
+            print('Reading Downloaded Symbol file...')
+            df = pd.read_csv(fpath, on_bad_lines="skip")
+            df.fillna(pd.NA, inplace=True)
+            return df
+        # now delete old file.
+        else: os.remove(fpath)
+    # Download file & save it.
+    url = "https://api.kite.trade/instruments"
+    print("Downloading & Saving Symbol file...")
+    df = pd.read_csv(url, on_bad_lines="skip")
+    df.fillna(pd.NA, inplace=True)
+    df.sort_values(['instrument_type', 'exchange'], ascending=[False, False], inplace=True)
+    df.to_csv(fpath, index=False)
+    return df
 
 
 if __name__ == "__main__":
