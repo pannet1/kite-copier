@@ -8,6 +8,7 @@
             {% for key in body[0].keys() %}
                 <th>{{ key }}</th>
             {% endfor %}
+                <th>cancel</th>
             </tr>
             </thead>
             <tbody>
@@ -51,6 +52,9 @@
                   <button class="btn btn-xs btn-error">?</button>
                   </div>
                 {% endif %}
+                </td>
+                <td>
+                  <button class="btn btn-xs btn-warning btn-cncl">x</button>
                 </td>
               </tr>
           </tr>
