@@ -7,10 +7,10 @@ from datetime import datetime as dt
 from time import sleep
 
 
-ORDER_TYPE = "LIMIT"  # OR MARKET
-BUFF = 2  # Rs. to add/sub to LTP
+ORDER_TYPE = 'LIMIT'  # OR MARKET
+BUFF = 2              # Rs. to add/sub to LTP
 
-sec_dir = "../../../"
+sec_dir = '../../../'
 filename = "users_kite.xlsx"
 logging = Logger(20, sec_dir + "kite-copier.log")  # 2nd param 'logfile.log'
 
@@ -64,12 +64,11 @@ def flwrs_pos():
             dct_flwr = cop.filter_pos(u._broker.positions)
             # pass the user id from xls
             df_ord = cop.get_diff_pos(u._userid, df_tgt, dct_flwr)
-            df_ord = df_ord[df_ord.quantity != "0"]
+            df_ord = df_ord[df_ord.quantity != '0']
             # join the order dfs
             if not df_ord.empty:
-                df_pos = (
-                    df_ord if df_pos.empty else pd.concat([df_pos, df_ord], sort=True)
-                )
+                df_pos = df_ord if df_pos.empty else pd.concat(
+                    [df_pos, df_ord], sort=True)
     return df_pos
 
 
@@ -77,41 +76,42 @@ def do_multiply(multiplied):
     global objs_usr, BUFF
     for m in multiplied:
         try:
-            obj_usr = objs_usr.get(m["userid"])
-            quantity = int(m.get("quantity", 0))
+            obj_usr = objs_usr.get(m['userid'])
+            quantity = int(m.get('quantity', 0))
             if quantity == 0:
-                logging.warn("quantity cannot be zero")
+                logging.warn('quantity cannot be zero')
                 return 0
             dir = 1 if quantity > 0 else -1
             """
             ensure that the symbol is in the max lots list
             if not iceberg is zero
             """
-            if ORDER_TYPE == "LIMIT":
-                exchsym = m["exchange"] + ":" + m["symbol"]
+            if ORDER_TYPE == 'LIMIT':
+                exchsym = m['exchange']+':'+m['symbol']
                 price = obj_usr._broker.ltp(exchsym)
-                m["price"] = price[exchsym]["last_price"] + (BUFF * dir)
-            m["order_type"] = ORDER_TYPE
-            if m["exchange"] == "NFO":
-                symbol = next(k for k, v in freeze.items() if m["symbol"].startswith(k))
+                m['price'] = price[exchsym]['last_price'] + (BUFF*dir)
+            m['order_type'] = ORDER_TYPE
+            if m['exchange'] == 'NFO':
+                symbol = next(k for k, v in freeze.items()
+                              if m['symbol'].startswith(k))
                 iceberg = freeze.get(symbol, 0)
                 if iceberg > 0 and abs(quantity) >= iceberg:
                     remainder = int(abs(quantity % iceberg) * dir)
                     if abs(remainder) > 0:
-                        m["quantity"] = remainder
+                        m['quantity'] = remainder
                         status = obj_usr.place_order(m, sec_dir)
                     times = int(abs(quantity) / iceberg)
                     for i in range(times):
-                        m["quantity"] = iceberg * dir
+                        m['quantity'] = iceberg * dir
                         status = obj_usr.place_order(m, sec_dir)
                 # quantity below freeze
                 elif iceberg > 0 and abs(quantity) < iceberg:
-                    m["quantity"] = int(quantity)
+                    m['quantity'] = int(quantity)
                     status = obj_usr.place_order(m, sec_dir)
             else:  # exchange is not NFO
-                m["quantity"] = int(quantity)
+                m['quantity'] = int(quantity)
                 status = obj_usr.place_order(m, sec_dir)
-            logging.info(f"order: {status} {m}")
+            logging.info(f'order: {status} {m}')
         except Exception as e:
             logging.warning(f"while multiplying {e}")
 
@@ -125,13 +125,13 @@ def slp_til_next_sec():
 
 while True:
     data = {}
-    data["positions"] = [{"MESSAGE": "no positions yet"}]
+    data['positions'] = [{'MESSAGE': 'no positions yet'}]
     try:
         df_pos = flwrs_pos()
         if not df_pos.empty:
-            data["positions"] = df_pos.to_dict("records")
-            do_multiply(data["positions"])
+            data['positions'] = df_pos.to_dict('records')
+            do_multiply(data['positions'])
         interval = slp_til_next_sec()
-        print(f"sleeping for {interval} ms")
+        print(f'sleeping for {interval} ms')
     except Exception as e:
         logging.warning(f"while multiplying {e}")

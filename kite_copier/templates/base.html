@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="winter">
+<html lang="en">
   <head>
     <title>{{ title }}</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link
-      href="https://cdn.jsdelivr.net/npm/daisyui@2.6.0/dist/full.css"
+      href="../static/main.css"
       rel="stylesheet"
       type="text/css"
     />
@@ -15,7 +15,7 @@
     {%  endif %}
   </head>
   <body>
-    <div class="mx-auto min-h-screen overflow-auto bg-blue-200">
+    <div class="mx-auto min-h-screen overflow-auto">
     <!-- navigation -->
     <div class="navbar bg-primary">
       <div class="mx-auto navbar-center">
@@ -35,7 +35,7 @@
     {% block content %}
     {% endblock content %}
     </div>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../static/main.js"></script>
 {% if title=='get_orders' %}
 <script> 
 /* consumed by modify and cancel order */ 

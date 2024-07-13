@@ -8,6 +8,7 @@
             {% for key in body[0].keys() %}
                 <th>{{ key }}</th>
             {% endfor %}
+                <th>bulk</th>
                 <th>cancel</th>
             </tr>
             </thead>
@@ -25,18 +26,18 @@
                 <td>{{  dct.order_type }}</td>
                 <td>
                   {% if dct.transaction_type == 'BUY' %}
-                  <div class="text-bold text-lg bg-clip-content bg-success text-white text-center">
+                  <div class="text-bold text-lg bg-clip-content text-green-500 text-center">
                   {% else %}
-                  <div class="text-bold text-lg bg-clip-content bg-error text-white text-center">
+                  <div class="text-bold text-lg bg-clip-content text-red-500 text-center">
                   {% endif %}
                     {{  dct.transaction_type }}
                   </div>
                 </td>
                 <td>
                     {% if dct.status == 'REJECTED' %}
-                    <div class="badge badge-error">
+                    <div class="badge badge-red-500 bg-red-500 text-white">
                     {% elif dct.status == 'COMPLETE' %}
-                    <div class="badge badge-success">
+                    <div class="badge border-green-500 bg-green-500 text-white">
                     {% else %}
                     <div class="badge">
                     {% endif %}
@@ -54,7 +55,13 @@
                 {% endif %}
                 </td>
                 <td>
-                  <button class="btn btn-xs btn-warning btn-cncl">x</button>
+                  <!-- TODO fix this link -->
+                  <a class="btn btn-sm" href="/bulk-modify?symbol={{  dct.tradingsymbol }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path><polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon></svg>
+                  </a>
+                </td>
+                <td>
+                  <button class="btn btn-sm bg-orange-500 btn-cncl">x</button>
                 </td>
               </tr>
           </tr>

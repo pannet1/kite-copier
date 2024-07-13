@@ -7,6 +7,7 @@ from time import sleep
 import pandas as pd
 import openpyxl
 import os
+from toolkit.fileutils import Fileutils
 
 
 def custom_exception_handler(func):
@@ -60,7 +61,7 @@ class User(object):
         product = o.get("product")
         price = o.get("price", 0)
         triggerPrice = o.get("triggerPrice", 0)
-        if price < 0: 
+        if price < 0:
             price = 0.05
         order_args = dict(
             symbol=symbol,
@@ -175,25 +176,21 @@ def load_all_users(
 
 
 def load_symbol_data(data_dir):
-    fpath = data_dir + 'instrument.csv'
-    if os.path.exists(fpath):
-        ttm = dtime.now(timezone.utc)
-        ftm = dtime.fromtimestamp(os.path.getctime(fpath), timezone.utc)
-        if(ttm.date() == ftm.date()) or (ttm.hour < 3):
-            # Reading File if today's file or before 8:30AM IST (3AM UTC).
-            print('Reading Downloaded Symbol file...')
-            df = pd.read_csv(fpath, on_bad_lines="skip")
-            df.fillna(pd.NA, inplace=True)
-            return df
-        # now delete old file.
-        else: os.remove(fpath)
-    # Download file & save it.
-    url = "https://api.kite.trade/instruments"
-    print("Downloading & Saving Symbol file...")
-    df = pd.read_csv(url, on_bad_lines="skip")
+    fpath = data_dir + "instrument.csv"
+    if Fileutils().is_file_not_2day(fpath):
+        # Download file & save it.
+        url = "https://api.kite.trade/instruments/NFO"
+        print("Downloading & Saving Symbol file...")
+        df = pd.read_csv(url, on_bad_lines="skip")
+        df.fillna(pd.NA, inplace=True)
+        df.sort_values(
+            ["instrument_type", "exchange"], ascending=[False, False], inplace=True
+        )
+        df.to_csv(fpath, index=False)
+    # Reading File if today's file or before 8:30AM IST (3AM UTC).
+    print("Reading Downloaded Symbol file...")
+    df = pd.read_csv(fpath, on_bad_lines="skip")
     df.fillna(pd.NA, inplace=True)
-    df.sort_values(['instrument_type', 'exchange'], ascending=[False, False], inplace=True)
-    df.to_csv(fpath, index=False)
     return df
 
 

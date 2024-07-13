@@ -7,8 +7,7 @@
             {% for key in body[0].keys() %}
                 <th>{{ key }}</th>
             {% endfor %}
-            <th>cancel</th>
-            <th>positions</th>
+            <th>kill</th>
             </tr>
             </thead>
             <tbody>
@@ -29,17 +28,17 @@
                 </td>
                   <td>
                     <a class="btn btn-sm btn-circle btn-error" href="/remove-user/?userid={{ user.userid }}">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </a>
-                  </td>
-                  <td>
-                    <a class="btn btn-sm btn-error" href="/close-all/?userid={{ user.userid }}">
-                      close
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12" /></svg>
                     </a>
                   </td>
               </tr>
               {% endfor %}
             </tbody>
+            </tfoot>
+              <tr>
+
+              </tr>
+            </tfoot>  
           </table>
         </div>
      {% endblock content %}

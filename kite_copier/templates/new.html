@@ -12,24 +12,33 @@
     <input type="radio" name="order" value="SL" data-title="SL" class="btn btn-sm"/>
     <input type="radio" name="order" value="SL-M" data-title="SL-M" class="btn btn-sm"/>
   </div>
+
   <div class="form-control autocomplete relative inline-block w-full">
     <label class="label">
       <span class="label-text">Trading Symbol</span>
       <span class="label-text">Exchange</span>
     </label>
     <input id="symbol" name="symbol" type="text" class="input input-sm input-bordered" style="width:70%">
-    <input id="exchange" name="exchange" type="text" class="input input-sm float-right" style="width:18%" placeholder="Exchange"/>
+    <input id="exchange" name="exchange" type="text" class="disabled input input-sm float-right" style="width:18%" placeholder="Exchange"/>
   </div>
+
   <div class="form-control relative inline-block">
     <label class="label">
       <span class="label-text">Price</span>
       <span class="label-text">Trigger Price</span>
-      <span class="label-text">Lot Size</span>
     </label>
-    <input type="number" id="price" name="price" class="input input-sm input-bordered caret-blue-500 required" style="width:auto" min="0" value="0" step="0.05"/>
-    <input type="number" id="trigger" name="trigger" class="input input-sm input-bordered" style="width:auto" min="0" value="0" step="0.05"/>
-    <input type="number" id="lotsize" name="trigger" class="input input-sm input-bordered float-right" style="width:15%" min="0" value="0" disabled/>
+    <input type="number" id="price" name="price" class="input input-sm input-bordered caret-blue-500 required" min="0" value="0" step="0.05" style="width:49%"/>
+    <input type="number" id="trigger" name="trigger" class="input input-sm input-bordered float-right"  min="0" value="0" step="0.05" style="width:49%"/>
   </div>
+
+  <div class="form-control">
+    <label class="label"> 
+    <span class="label-text-alt">Lot size:</span>
+    <span id="lotsize" name="lotsize" class="label-text-alt"></span>
+    </label>
+  </div>
+    <!-- input type="number" id="lotsize" name="trigger" class="input input-sm input-bordered float-right" min="0" value="0"/ -->
+
   <div class="form-control">
     <label class="label cursor-pointer">
       <span class="label-text text-lg">SELL</span>

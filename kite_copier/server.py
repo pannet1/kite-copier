@@ -19,6 +19,7 @@ logging = Logger(20, data_dir + "kite-copier.log")  # 2nd param 'logfile.log'
 # Load Instrument file.
 pd = load_symbol_data(data_dir)
 
+
 def return_users() -> Dict[str, User]:
     xls_file = "users_kite.xlsx"
     objs_usr = load_all_users(sec_dir, data_dir, xls_file)
@@ -73,7 +74,8 @@ async def home(request: Request):
         odrs = get_all_orders(user._userid)
         if odrs:
             dct["orders"] = len(get_all_orders(user._userid))
-        else: dct["orders"] = 0
+        else:
+            dct["orders"] = 0
         # Pnl Count.
         poss = user.get_positions()
         pnl = 0
@@ -140,7 +142,8 @@ async def positions(request: Request):
     ctx["body"] = []
     for uid, user in objs_usr.items():
         lst = user.get_positions()
-        if not lst: continue
+        if not lst:
+            continue
         lst = [{key: dct[key] for key in keys} for dct in lst]
         if any(lst):
             lst = [{"userid": uid, **dct} for dct in lst]
@@ -191,7 +194,8 @@ def orders(request: Request):
     ]
     for uuid, user in objs_usr.items():
         lst = user.get_orders()
-        if not lst: continue
+        if not lst:
+            continue
         lst = [{key: dct[key] for key in keys} for dct in lst]
         if any(lst):
             lst = [{"userid": uuid, **dct} for dct in lst]
@@ -204,7 +208,7 @@ def orders(request: Request):
 async def search(request: Request, sym: str):
     # dt = pd[pd.tradingsymbol.str.contains(sym.upper())]
     dt = pd[pd.tradingsymbol.str.startswith(sym.upper())]
-    data = dt[:15].to_dict(orient='records')
+    data = dt[:15].to_dict(orient="records")
     return data
 
 
@@ -233,11 +237,11 @@ async def post_orders(
     ctx = {"request": request, "title": inspect.stack()[0][3], "pages": pages}
     mh, md, th, td = [], [], [], []
     side = "BUY" if txn == "on" else "SELL"
-    if not order.upper() in ('MARKET', 'LIMIT', 'SL', 'SL-M'):
+    if not order.upper() in ("MARKET", "LIMIT", "SL", "SL-M"):
         # here can return error to user if orderType is not valid
         pass
-    
-    if not product.upper() in ('NRML', 'MIS', 'CNC'):
+
+    if not product.upper() in ("NRML", "MIS", "CNC"):
         # here can return error to user if orderType is not valid
         pass
 
@@ -263,14 +267,13 @@ async def post_orders(
                 data = str(e)
                 break
             # if len(mh) > 0:
-                # ctx["mh"], ctx["md"] = mh, md
-                # if len(th) > 0:
-                    # ctx["th"], ctx["data"] = th, td
+            # ctx["mh"], ctx["md"] = mh, md
+            # if len(th) > 0:
+            # ctx["th"], ctx["data"] = th, td
         # return jt.TemplateResponse("table.html", ctx)
     return HTMLResponse(str(data))
     # else:
-        # return RedirectResponse("/orders", status_code=status.HTTP_302_FOUND)
-
+    # return RedirectResponse("/orders", status_code=status.HTTP_302_FOUND)
 
 
 if __name__ == "__main__":
