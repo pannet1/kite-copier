@@ -175,25 +175,6 @@ def load_all_users(
         return users
 
 
-def load_symbol_data(data_dir):
-    fpath = data_dir + "instrument.csv"
-    if Fileutils().is_file_not_2day(fpath):
-        # Download file & save it.
-        url = "https://api.kite.trade/instruments/NFO"
-        print("Downloading & Saving Symbol file...")
-        df = pd.read_csv(url, on_bad_lines="skip")
-        df.fillna(pd.NA, inplace=True)
-        df.sort_values(
-            ["instrument_type", "exchange"], ascending=[False, False], inplace=True
-        )
-        df.to_csv(fpath, index=False)
-    # Reading File if today's file or before 8:30AM IST (3AM UTC).
-    print("Reading Downloaded Symbol file...")
-    df = pd.read_csv(fpath, on_bad_lines="skip")
-    df.fillna(pd.NA, inplace=True)
-    return df
-
-
 if __name__ == "__main__":
     ma, us = load_all_users("../../", "users_kite.xlsx")
     print(ma._broker.positions)
