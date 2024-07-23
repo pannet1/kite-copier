@@ -36,7 +36,7 @@
     {% endblock content %}
     </div>
     <script src="../static/main.js"></script>
-{% if title=='get_orders' %}
+{% if title=='orders' %}
 <script> 
 /* consumed by modify and cancel order */ 
 const getRows = (my) => {
@@ -49,55 +49,55 @@ const getRows = (my) => {
   }
   console.log(keys)
   let data = '';
-  if (keys[3] == 'LIMIT') {
+  if (keys[8] == 'LIMIT') {
     data = 'LMT'
   } 
-  else if(keys[3] == 'MARKET') {
+  else if(keys[8] == 'MARKET') {
     data = 'MKT'  
   }
-  else if(keys[3] == 'STOPLOSS_LIMIT') {
+  else if(keys[8] == 'STOPLOSS_LIMIT') {
     data = 'SL'  
   }
-  else if(keys[3] == 'STOPLOSS_MARKET') {
+  else if(keys[8] == 'STOPLOSS_MARKET') {
     data = 'SL-M'  
   }
 
   const otype = document.querySelectorAll(`input[data-title=${data}]`)
   otype[0].setAttribute('checked', 'checked') 
   let pdata = '';
-  if (keys[4] == 'CARRYFORWARD') {
+  if (keys[5] == 'NRML') {
     pdata = 'NRML' 
   } 
-  else if(keys[4] == 'INTRADAY') {
+  else if(keys[5] == 'MIS') {
     pdata = 'MIS'  
   }
-  else if(keys[4] == 'DELIVERY') {
+  else if(keys[5] == 'CNC') {
     pdata = 'CNC'  
   } 
   const ptype = document.querySelectorAll(`input[data-title=${pdata}]`)
   ptype[0].setAttribute('checked', 'checked') 
   const price = document.getElementById('price')
-  price.value = keys[5]
+  price.value = keys[6]
   const trigger = document.getElementById('trigger')
-  trigger.value = keys[6]
+  trigger.value = keys[7]
   const qty = document.getElementById('qty')
-  qty.value = keys[7]
+  qty.value = keys[4]
   const symbol = document.getElementById('symbol')
-  symbol.value = keys[8]
+  symbol.value = keys[3]
   const txn = document.getElementById('txn')
-  if (keys[9] == 'BUY') {
+  if (keys[10] == 'BUY') {
     txn.setAttribute('checked', 'checked') 
   } else {
     txn.removeAttribute('checked')
   }
-  sync_frm_clr(keys[9])
+  sync_frm_clr(keys[10])
 
   const exchange = document.getElementById('exchange')
-  exchange.value = keys[10]
+  exchange.value = keys[2]
   const token = document.getElementById('token')
-  token.value = keys[11]
+  token.value = keys[13]
   const order_id = document.getElementById('order_id')
-  order_id.value = keys[12]
+  order_id.value = keys[1]
   // key10 is empty
   // key11 is condition for this loop
   if (keys[14] == 'cancelled') {
@@ -110,7 +110,7 @@ const getRows = (my) => {
     data = 'DONT_DO_ANYTHING'
   }
   const client_name = document.getElementById('client_name')
-  client_name.value = keys[15]
+  client_name.value = keys[0]
   const title = document.getElementById('title')
   title.innerHTML = symbol.value + ' (' + client_name.value + ')'
   return data
@@ -151,11 +151,6 @@ const getCancelOrder = (otype) => {
   if (order_id.value.length > 0) {
     key = key + '&order_id=' + order_id.value; }
   else { return }
-  if(otype =='SL' || otype =='SL-M') {
-    key = key + '&variety=STOPLOSS' 
-  } else if(otype =='MKT' || otype =='LMT') {
-    key = key + '&variety=NORMAL' 
-  } else { return }
   get_data('/order_cancel/', key).then(result => {
       // only change is the below
       console.log(result)
@@ -170,6 +165,7 @@ for(let i = 0; i < btnCncl.length; i++) {
   })
 }
 </script> 
+<script src="../static/requests.js"></script>
 {% endif %}
 <!-- end of orders -->
 {% if title=='positions' %}

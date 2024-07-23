@@ -81,10 +81,13 @@ async def home(request: Request):
 
 
 @app.get("/order_cancel/")
-def get_order_cancel(request: Request, client_name: str, order_id: str, variety: str):
+def get_order_cancel(request: Request, client_name: str, order_id: str):
     obj_client = get_user_by_id(client_name)
-    resp = obj_client._broker.order_cancel(order_id, variety)
-    logging.info(resp)
+    kwargs = {"order_id": order_id }
+    try:
+        _ = obj_client._broker.order_cancel(**kwargs)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/new", response_class=HTMLResponse)
