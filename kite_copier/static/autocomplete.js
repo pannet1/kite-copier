@@ -13,17 +13,16 @@ const ac_input = document.getElementById("symbol");
 
 //******************************************/
 const autocomplete = (inp) => {
-let currentFocus;
+  let currentFocus;
   /*the autocomplete function takes two arguments,
   the text field element and an array of possible autocompleted values:*/
   /*execute a function when someone writes in the text field:*/
-  inp.addEventListener("input", function() {
+  inp.addEventListener("input", function () {
     const val = this.value.toUpperCase();
     /*close any already open lists of autocompleted values*/
     closeAllLists();
-    if (!val || (val.length <=2) || val == prevSearch)
-    { return false;}
-    else { prevSearch = val}
+    if (!val || (val.length <= 2) || val == prevSearch) { return false; }
+    else { prevSearch = val }
     currentFocus = -1;
     /*create cntr DIV element that will contain the items (values):*/
     const cntr = document.createElement("DIV");
@@ -40,14 +39,14 @@ let currentFocus;
         inp.value = data.symbol
         // Close the list.
         closeAllLists();
-      } else{
+      } else {
         console.log(e.target, e.target.tagName)
       }
     })
     /*append the DIV element as a child of the autocomplete container:*/
     this.parentNode.appendChild(cntr);
     get_data('/search?sym=', val).then(arr => {
-      for (let i=0; i< arr.length; i++) {
+      for (let i = 0; i < arr.length; i++) {
         dobj = arr[i]
         sym = dobj.tradingsymbol
         /*check if the item starts with the same letters as the text field value:*/
@@ -58,18 +57,15 @@ let currentFocus;
           list.setAttribute('auto-item', true)
           // list.classList.add('badge')
           list.dataset.symbol = sym
-          list.dataset.exchange = dobj.exchange 
+          list.dataset.exchange = dobj.exchange
           list.dataset.lot = dobj.lot_size
           // list.innerHTML += dobj.instrument_type
-          list.innerHTML += `
-          <span class="badge">${dobj.instrument_type}</span>
-          `
           let index = sym.search(val)
           if (index > 0) {
             list.innerHTML += sym.substr(0, index)
           }
           list.innerHTML += "<strong>" + sym.substr(index, val.length) + "</strong>";
-          list.innerHTML += sym.substr(index+val.length)
+          list.innerHTML += sym.substr(index + val.length)
           cntr.appendChild(list);
         } // end of if
       } // end of for
@@ -77,7 +73,7 @@ let currentFocus;
   }); // end of input even listener
 
   /*execute a function presses a key on the keyboard:*/
-  inp.addEventListener("keydown", function(e) {
+  inp.addEventListener("keydown", function (e) {
     let x = document.getElementById(this.id + "autocomplete-list");
     if (x) x = x.getElementsByTagName("div");
     if (e.keyCode == 40) {
@@ -126,33 +122,17 @@ let currentFocus;
     const x = document.getElementsByClassName("autocomplete-items");
     for (let i = 0; i < x.length; i++) {
       if (elmnt != x[i] && elmnt != inp) {
-      x[i].parentNode.removeChild(x[i]);
+        x[i].parentNode.removeChild(x[i]);
       }
     }
   }
 
   /*execute a function when someone clicks in the document:*/
   document.addEventListener("click", function (e) {
-      closeAllLists(e.target);
+    closeAllLists(e.target);
   });
 }
 /*******************************/
 // end of autocomplete
 /******************************/
 autocomplete(ac_input)
-// Init a timeout variable to be used below
-// Listen for keystroke events
-
-/*
-let timeout = null;
-ac_input.addEventListener('keyup', function (e) {
-  // Clear the timeout if it has already been set.
-  // This will prevent the previous task from executing
-  // if it has been less than <MILLISECONDS>
-  clearTimeout(timeout);
-  // Make a new timeout set to go off in 1000ms (1 second)
-  timeout = setTimeout(function () {
-    console.log("timeout")
-  }, 1000);
-})
-*/
