@@ -5,6 +5,9 @@ import pendulum
 from time import sleep
 import pandas as pd
 import openpyxl
+import os
+from pydantic import BaseModel
+from typing import Any
 
 
 def custom_exception_handler(func):
@@ -25,14 +28,21 @@ def custom_exception_handler(func):
     return wrapper
 
 
+class DataResponse(BaseModel):
+    status: bool = False
+    data: Any = None
+    error: str = None
+
+
 class User(object):
     def __init__(self, **kwargs):
-        self._userid = kwargs["userid"]
-        self._multiplier = kwargs["multiplier"]
-        self._disabled = True if isinstance(kwargs["disabled"], str) else False
+        self._userid: str = kwargs.get("userid")
+        self._multiplier: float = kwargs.get("multiplier", 1.0)
+        self._disabled = True if isinstance(kwargs.get("disabled"), str) else False
         self._broker = get_kite(**kwargs)
         self._enctoken = self._broker.enctoken
         self._last_order = {}
+        self._status: bool = True
 
     def _write_order(self, o, logpath):
         try:
@@ -49,35 +59,117 @@ class User(object):
         finally:
             return
 
-    def place_order(self, o, logpath="../data/"):
-        print(o)
-        status = {}
-        symbol = o.get("symbol")
-        quantity = o.get("quantity", 0)
-        product = o.get("product")
-        exchange = o.get("exchange")
-        order_type = o.get("order_type")
-        price = o.get("price", 0)
-        if price < 0:
-            price = 0.05
-        side = "SELL" if quantity < 0 else "BUY"
-        order_args = dict(
-            symbol=symbol,
-            quantity=abs(quantity),
-            side=side,
-            order_type=order_type,
-            price=price,
-            exchange=exchange,
-            product=product,
-            validity="DAY",
-        )
-        if self._last_order == order_args:
-            print("Penguin sleeping on the iceberg :-)")
-            sleep(3)
-        self._last_order = order_args
-        self._write_order(order_args, logpath)
-        status = self._broker.order_place(**order_args)
-        return status
+    def place_order(self, o: dict, logpath="../data/"):
+        try:
+            symbol = o.get("symbol")
+            quantity = o.get("quantity", 0)
+            product = o.get("product")
+            exchange = o.get("exchange")
+            orderType = o.get("orderType")
+            price = o.get("price", 0)
+            side = o.get("transactionType")
+            triggerPrice = o.get("triggerPrice")
+            if price < 0: price = 0.05
+            # side = "SELL" if quantity < 0 else "BUY"
+            order_args = dict(
+                symbol=symbol,
+                exchange=exchange,
+                side=side,
+                order_type=orderType,
+                quantity=abs(int(quantity)),
+                product=product,
+                price=price,
+                trigger_price=triggerPrice,
+                validity="DAY",
+            )
+            if self._last_order == order_args:
+                print("Penguin sleeping on the iceberg :-)")
+                sleep(3)
+            self._last_order = order_args
+            data = self._broker.order_place(**order_args)
+            self._write_order(order_args, logpath)
+            return DataResponse(status=True, data=data)
+        except Exception as e:
+            return DataResponse(error=str(e))
+        
+
+    def get_orders(self, order_id=None):
+        '''
+        It will return all orders in data attribute.
+        '''
+        STATUS_MAP = {
+            "OPEN": "PENDING",
+            "COMPLETE": "COMPLETE",
+            "REJECTED": "REJECTED",
+            "CANCELLED": "CANCELLED",
+            "CANCELLED AMO": "CANCELLED",
+            "OPEN PENDING": "WAITING",
+            "MODIFY PENDING": "WAITING",
+            "CANCEL PENDING": "WAITING",
+            "TRIGGER PENDING": "WAITING",
+            "AMO REQ RECEIVED": "WAITING",
+        }            
+        try:
+            if order_id is not None:
+                data = self._broker.kite.order_history(order_id=order_id)
+            else:
+                data = self._broker.kite.orders()
+            if data:
+                for order in data:
+                    order.update(dict(status=STATUS_MAP.get(order.get('status'))))
+            return DataResponse(status=True, data=data)
+        except Exception as e:
+            err = f'Error while getting orders for {self._userid}: {e}'
+            return DataResponse(error=err)
+        
+    
+    def find_orders(self, status=None):
+        try:
+            STATUS = ("COMPLETE", "CANCELLED", "REJECTED")
+            data = self.get_orders()
+            if not data.status or not status: return data
+            elif status.lower() == 'open':
+                orders = [order for order in data.data if order and order.get("status") not in STATUS]
+                print(orders)
+                data.data = orders
+            elif status.lower() == 'close':
+                print(orders)
+                orders = [order for order in data.data if order and order.get("status") in STATUS]
+                data.data = orders
+            return data
+        except Exception as e:
+            data.status = False
+            data.error = f'Error while finding Orders: {e}.'
+            return data
+
+
+    def modify_order(self, orderId, qty=None, price=None, trigger=None, orderType=None, variety="regular", validity=None,  parentOrderId=None, disclosedQty=None):
+        '''
+        It will cancel order and return orderId in data attribute.
+        '''
+        try:
+            args = dict(variety=variety, order_id=orderId, parent_order_id=parentOrderId, quantity=qty, price=price, order_type=orderType, trigger_price=trigger, validity=validity, disclosed_quantity=disclosedQty)
+            data = self._broker.kite.modify_order(**args)
+            return DataResponse(status=True, data=data)
+        except Exception as e:
+            err = f'Error while modifying Order: {orderId} of User {self._userid}: {e}.'
+            return DataResponse(error=err)
+
+
+    def cancel_order(self, order_id, variety="regular", parentOrderId=None):
+        '''
+        It will cancel order and return orderId in data attribute.
+        '''
+        try:
+            if not variety or variety.lower() not in ("regular", "amo", "co", "iceberg", "auction"):
+                variety = "regular"  
+            args = dict(variety=variety, order_id=order_id, parent_order_id=parentOrderId) 
+            data = self._broker.kite.cancel_order(**args)
+            return DataResponse(status=True, data=data)
+        except Exception as e:
+            return DataResponse(error=f'Error while Cancelling Order {order_id}: {e}')
+    
+
 
     def __clean_data(self, data: list) -> list:
         dlen = len(data)
@@ -89,7 +181,7 @@ class User(object):
             return []
 
     @custom_exception_handler
-    def get_orders(self, order_id=None) -> list:
+    def _TESTget_orders(self, order_id=None) -> list:
         if order_id is not None:
             data: list = self._broker.kite.order_history(order_id=order_id)
         else:
@@ -154,7 +246,7 @@ def load_all_users(
         u = User(**user)
         if not u._disabled:
             lst.append(["I" + str(row), u._enctoken])
-            users[u._userid] = u
+            users[u._userid.upper()] = u
         else:
             print(f"{u._userid} is disabled")
         row += 1
@@ -171,6 +263,32 @@ def load_all_users(
     else:
         return users
 
+
+def load_symbol_data(data_dir):
+    import time
+    from datetime import datetime as dtime, timezone
+    # first check for symbol file.
+    fpath = data_dir + 'instrument.csv'
+    if os.path.exists(fpath):
+        ttm = dtime.now(timezone.utc)
+        ftm = dtime.fromtimestamp(os.path.getctime(fpath), timezone.utc)
+        if(ttm.date() == ftm.date()) or (ttm.hour < 3):
+            # now read file.
+            print('Reading Downloaded Symbol file...')
+            df = pd.read_csv(fpath, on_bad_lines="skip")
+            df.fillna(pd.NA, inplace=True)
+            df.sort_values(['instrument_type', 'exchange'], ascending=[False, False], inplace=True)
+            return df
+        # now delete old file.
+        else: os.remove(fpath)
+    # Download file & save it.
+    url = "https://api.kite.trade/instruments"
+    print("Downloading & Saving Symbol file.")
+    df = pd.read_csv(url, on_bad_lines="skip")
+    df.fillna(pd.NA, inplace=True)
+    df.to_csv(fpath, index=False)
+    # df = df[['tradingsymbol', 'exchange', 'lot_size']]
+    return df
 
 if __name__ == "__main__":
     ma, us = load_all_users("../../", "users_kite.xlsx")

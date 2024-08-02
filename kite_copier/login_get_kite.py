@@ -12,31 +12,26 @@ def get_kite(**kwargs):
 
 def get_bypass(**kwargs):
     try:
-        tokpath = kwargs['tokpath']
-        enctoken = None
-        f = Fileutils()
-        if f.is_file_not_2day(tokpath) is False:
-            print(f'file modified today ... reading {enctoken}')
-            with open(tokpath, 'r') as tf:
-                enctoken = tf.read()
-                print(f'enctoken sent to broker {enctoken}')
         print(kwargs)
+        tokpath = kwargs['tokpath']
+        
         bypass = Bypass(userid=kwargs['userid'],
                         password=kwargs['password'],
                         totp=kwargs['totp'],
                         tokpath=kwargs['tokpath'],
-                        enctoken=enctoken,
+                        # enctoken=enctoken,
                         )
         if bypass.authenticate():
-            if not enctoken:
-                enctoken = bypass.kite.enctoken
-            if enctoken:
-                with open(tokpath, 'w') as tw:
-                    print("writing enctoken to file")
-                    tw.write(enctoken)
-            else: print(f'Not able to get or generate enctoken for {bypass.userid}, check your credentials...')
+            if not bypass.enctoken:
+                # enctoken = bypass.kite.enctoken
+                print(f'Not able to get or generate enctoken for {bypass.userid}, check your credentials...')
+            # if enctoken:
+            #     with open(tokpath, 'w') as tw:
+            #         print("Saving enctoken to file.")
+            #         tw.write(enctoken)
+            # else: print(f'Not able to get or generate enctoken for {bypass.userid}, check your credentials...')
     except Exception as e:
-        print(f"unable to create bypass object {e}")
+        print(f"unable to create bypass object {e}.")
     else:
         return bypass
 
@@ -50,9 +45,8 @@ def get_zerodha(**kwargs):
                        api_key=kwargs['api_key'],
                        secret=kwargs['secret'],
                        tokpath=kwargs['tokpath']
-                       )
+        )
         kite.authenticate()
-        kite.enctoken = ""
     except Exception as e:
         print(f"exception while creating zerodha object {e}")
     else:

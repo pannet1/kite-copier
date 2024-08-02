@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+      {% block content %}
+        <div class="mb-5 overflow-x-auto">
+          {% if body %}
+          <table id="table" class="table w-full">
+            <thead>
+            <tr>
+            {% for key in body[0].keys() %}
+                <th>{{ key }}</th>
+            {% endfor %}
+            </tr>
+            </thead>
+            <tbody >
+              {% for dct in body %}
+              <tr>
+                <td>{{  dct.userid }}</td>
+                <!-- <td>
+                  {{  dct.order_id }}
+                  <div class="btn-info">
+                    Buttons are going to be here.</p>
+                  </div>
+                  <td>Modify order: {{  dct.userid }}</td> 
+                </td> -->
+
+                <td class="grid gap-2 hover:gap-4 justify-items-center" data-orderid="{{dct.order_id}}" data-userid="{{dct.userid}}" data-symbol="{{dct.tradingsymbol}}" data-product="{{dct.product}}" data-order="{{dct.order_type}}" data-side="{{dct.transaction_type}}">
+                  <!-- Order ID -->
+                  {{ dct.order_id }}
+                  <div>
+                  </div>
+                  <!-- Cancel all orders button -->
+                  {% if not('CANCEL' in dct.status.upper() or 'COMPLETE' in dct.status.upper() or 'REJECT' in dct.status.upper()) %}
+                  <Button class="btn btn-block btn-md tooltip" data-tip="Cancel the Order" onclick="cancelOrder(event)">
+                    <!-- <a onclick="cancelOrder(event)"> -->
+                    <!-- </a> -->
+                    Cancel Order
+                    <!-- <a onclick="cancelOrder(event)">
+                      Cancel Order
+                    </a> -->
+                    <!-- <a href="/cancel_order?userid={{dct.userid}}&orderid={{dct.order_id}}" onclick="CancelOrder(event)">Cancel Order</a> -->
+                  </Button>
+                  {% endif %}
+                  <!-- Modify all orders button -->
+                  <Button class="btn btn-block btn-md btn-secondary tooltip" data-tip="Modify All Orders" onclick="modifyOrder(event)"> 
+                    <!-- <a href="/modify_order?symbol={{dct.tradingsymbol}}&side={{dct.transaction_type}}&product={{dct.product}}&order={{dct.order_type}}&status={{dct.status}}"> -->
+                      Modify All Orders
+                    <!-- </a> -->
+                  </Button>
+                </td>
+                <td>{{  dct.exchange }}</td>
+                <td>{{  dct.tradingsymbol }}</td>
+                <td>{{  dct.quantity }}</td>
+                <td>{{  dct.product }}</td>
+                <td>{{  dct.price }}</td>
+                <td>{{  dct.trigger_price }}</td>
+                <td>{{  dct.order_type }}</td>
+                <td>
+                  {% if dct.transaction_type == 'BUY' %}
+                  <div class="bg-green-500 text-bold text-lg bg-clip-content text-white text-center">
+                  {% else %}
+                  <div class="bg-red-500 text-bold text-lg bg-clip-content text-white text-center">
+                  {% endif %}
+                    {{  dct.transaction_type }}
+                  </div>
+                </td>
+                <td>
+                  {% set ostat = dct.status.upper() %}
+                    {% if "COMPLETE" in ostat %}
+                    <div class="badge badge-success">
+                    {% elif "REJECT" in ostat or "CANCEL" in ostat %}
+                    <div class="badge badge-error">
+                    {% else %}
+                    <div class="badge badge-warning">
+                    {% endif %}
+                    {{  dct.status }}
+                  </div>
+                </td>
+                <td>
+                  {% if dct.status_message == None %}
+                  &nbsp;
+                  {% else %}
+                  
+                  
+                  
+  <div class="tooltip fit-content" data-tip="{{dct.status_message}}">
+<button data-popover-target="popover-user-profile" type="button" class="tooltip text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">User profile</button>
+
+<div data-popover id="popover-user-profile" role="tooltip" class="absolute z-10 invisible inline-block w-64 text-sm text-gray-500 transition-opacity duration-300 bg-white border border-gray-200 rounded-lg shadow-sm opacity-0 dark:text-gray-400 dark:bg-gray-800 dark:border-gray-600">
+    <div class="p-3">
+        <div class="flex items-center justify-between mb-2">
+            <a href="#">
+                <img class="w-10 h-10 rounded-full" src="/docs/images/people/profile-picture-1.jpg" alt="Jese Leos">
+            </a>
+            <div>
+                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs px-3 py-1.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Follow</button>
+            </div>
+        </div>
+        <p class="text-base font-semibold leading-none text-gray-900 dark:text-white">
+            <a href="#">Jese Leos</a>
+        </p>
+        <p class="mb-3 text-sm font-normal">
+            <a href="#" class="hover:underline">@jeseleos</a>
+        </p>
+        <p class="mb-4 text-sm">Open-source contributor. Building <a href="#" class="text-blue-600 dark:text-blue-500 hover:underline">flowbite.com</a>.</p>
+        <ul class="flex text-sm">
+            <li class="me-2">
+                <a href="#" class="hover:underline">
+                    <span class="font-semibold text-gray-900 dark:text-white">799</span>
+                    <span>Following</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" class="hover:underline">
+                    <span class="font-semibold text-gray-900 dark:text-white">3,758</span>
+                    <span>Followers</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div data-popper-arrow></div>
+</div>
+
+</div>
+
+
+
+
+                  
+                  <div class="tooltip tooltip-error" 
+                  data-tip="{{  dct.status_message }}">
+                  <button class="btn btn-xs btn-error">?</button>
+                  </div>
+                {% endif %}
+                </td>
+                <td>{{ dct.variety.upper() }}</td>
+              </tr>
+          </tr>
+          {% endfor %}
+
+            </tbody>
+            <tfoot>
+              <tr>
+
+              </tr>
+            </tfoot>
+          </table>
+        {% else %}
+          <div class="hero min-h-screen" style="background-image: url(./static/no_data.jpg);">
+            <div class="hero-overlay bg-blend-overlay"></div>
+            <div class="hero-content text-center text-neutral-content">
+              <div class="max-w-md">
+                <h1 class="mb-5 text-5xl font-bold">Happy Trading</h1>
+                <p class="mb-5">Are you ready to play today</p>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        </div>
+     {% endblock content %}
+
+{% block js1 %}
+<script>
+  function cancelOrder(e) {
+    const audioElement = document.getElementById('notificationSound');
+//    audioElement.currentTime = 0.09
+    audioElement.currentTime = 0.5
+    audioElement.play();
+    // console.log(e, e.target, e.target.parentElement)
+    const btn = e.target.parentElement
+    console.log(btn)
+    // then take out data one by one from dataset
+    const userid = btn.dataset.userid
+    const orderid = btn.dataset.orderid
+    // now send this data to backend and show the status of msg.
+    url = `/order?userid=${userid}&orderid=${orderid}`
+    fetch(url, {
+      method: 'DELETE',
+    }).then(res => res.json())
+    .then((resd) => {
+      const data = resd
+      // if status ok then print as success with orderid & if not success then error msg box.
+      // now, can show popup card for status.
+      if (data.msg === btn.dataset.orderid) {
+        console.log('Order Cancelled:', data)
+      } else{
+        console.log('Error while cancelling Order:', data)
+      }
+})
+
+    // console.log(res)
+      // throw Error('Not able to cancel order.')
+  } // end of cancelOrder
+
+
+  function modifyOrder(e) {
+    // 1. need to send basic data like exhcnage, order, product, etc.
+    const audioElement = document.getElementById('notificationSound');
+    audioElement.currentTime = 0.08
+    audioElement.play();
+    const btn = e.target.parentElement
+    const reqD = {
+      symbol: btn.dataset.symbol,
+      product: btn.dataset.product,
+      order: btn.dataset.order,
+      side: btn.dataset.side,
+      // status: btn.dataset.status
+    }
+    // const url = `/modify_order?symbol=${reqD.symbol}&product=${reqD.product}&order=${reqD.order}&side=${reqD.side}`
+    const url = `/bulk_orders?symbol=${reqD.symbol}&product=${reqD.product}&order=${reqD.order}&side=${reqD.side}`
+    // console.log(url)
+    fetch(url)
+    .then(res => res.json())
+    .then((resd) => {
+      const data = resd
+      // show page if status is ok.
+      // now you can show popup card for the status.
+      if (data.status === "ok") {
+        console.log('Order Modified:', data)
+      } else{
+        console.log('Error while modifying Order:', data)
+      }
+    })
+    // 2. then based on it, orders will be received by which we have to give option that what we can modify things like - orderType, quantity, price, triggerPrice, disclosedQuantity, validity.
+    // based on user selected options send these orders and place modify order for the each orders of the list.
+  } // end of modifyOrder
+
+</script>
+{% endblock js1 %}
+
+

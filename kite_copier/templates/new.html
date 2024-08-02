@@ -1,43 +1,45 @@
 {% extends "base.html" %}
 {%  block form  %}
-<form method='post' action='/orders/' id="frm" autocomplete="off" class="mx-auto p-5 bg-red-300 w-full max-w-lg">
+<form method='post' action='/orders' id="orderFrm" autocomplete="off" class="mx-auto p-5 w-full max-w-lg bg-green-500">
 
   <div class="btn-group">
-    <input type="radio" name="ptype" value="1" data-title="NRML" class="btn btn-sm" checked />
-    <input type="radio" name="ptype" value="2" data-title="MIS" class="btn btn-sm"  />
-    <input type="radio" name="ptype" value="3" data-title="CNC" class="btn btn-sm" />
+    <input type="radio" name="product" value="NRML" data-title="NRML" class="btn btn-sm"/>
+    <input type="radio" name="product" value="MIS" data-title="MIS" class="btn btn-sm" checked/>
+    <input type="radio" name="product" value="CNC" data-title="CNC" class="btn btn-sm"/>
     &nbsp; &nbsp; &nbsp;
-    <input type="radio" name="otype" value="1" data-title="LMT" class="btn btn-sm" checked />
-    <input type="radio" name="otype" value="2" data-title="MKT" class="btn btn-sm"  />
-    <input type="radio" name="otype" value="3" data-title="SL" class="btn btn-sm" />
-    <input type="radio" name="otype" value="4" data-title="SL-M" class="btn btn-sm" />
+    <input type="radio" name="order" value="MARKET" data-title="MKT" class="btn btn-sm" checked/>
+    <input type="radio" name="order" value="LIMIT" data-title="LMT" class="btn btn-sm"/>
+    <input type="radio" name="order" value="SL" data-title="SL" class="btn btn-sm"/>
+    <input type="radio" name="order" value="SL-M" data-title="SL-M" class="btn btn-sm"/>
   </div>
   <div class="form-control autocomplete relative inline-block w-full">
     <label class="label">
       <span class="label-text">Trading Symbol</span>
+      <span class="label-text">Exchange</span>
     </label>
-    <input id="symbol" name="symbol" type="text" class="input input-sm input-bordered" style="width:81%">
-    <input id="exchange" name="exchange" type="text" readonly="readonly" class="input input-sm input-ghost float-right" style="width:4.5rem" />
-    <input id="token" name="token" type="hidden" />
+    <input id="symbol" name="symbol" type="text" class="input input-sm input-bordered" style="width:70%" required>
+    <input id="exchange" name="exchange" type="text" class="input input-sm float-right" style="width:25%" placeholder="Exchange" required/>
   </div>
   <div class="form-control relative inline-block">
     <label class="label">
       <span class="label-text">Price</span>
       <span class="label-text">Trigger Price</span>
+      <span class="label-text">Lot Size</span>
     </label>
-    <input type="text" id="price" name="price" class="input input-sm input-bordered" style="width:49%"/>
-    <input type="text" id="trigger" name="trigger" class="input input-sm input-bordered float-right" style="width:49%"/>
+    <input type="number" id="price" name="price" class="input input-sm input-bordered caret-blue-500 required" style="width:auto" min="0" value="0" step="0.05" required/>
+    <input type="number" id="trigger" name="trigger" class="input input-sm input-bordered" style="width:auto" min="0" value="0" step="0.05" required/>
+    <input type="number" id="lotsize" class="input input-sm input-bordered float-right" style="width:15%" min="1" value="1"/>
   </div>
-  <div class="form-control">
-    <label class="label">
-      <span class="label-text-alt">Lot size:</span>
-      <span id="lotsize" name="lotsize" class="label-text-alt"></span>
-    </label>
+  <div class="form-control hidden">
+    <div class="label flex-item" style="padding-right: 10px">
+        Validity :
+      <input type="text" class="input input-sm input-bordered float-left" style="width:12%; margin-right:21rem" value="DAY" disabled/>
+    </div>
   </div>
-<div class="form-control">
+<div class="form-control py-3">
   <label class="label cursor-pointer">
     <span class="label-text text-lg">SELL</span>
-    <input id="txn" type="checkbox" name="txn" class="toggle toggle-lg bg-red-300 checked:bg-green-500"/>
+    <input id="txn" type="checkbox" name="txn" class="toggle toggle-lg bg-red-300 checked:bg-green-500" checked/>
     <span class="label-text text-lg">BUY</span>
   </label>
 </div>
@@ -48,19 +50,26 @@
   <table class="mx-auto table">
     <tbody>
       {% for dct in body %}
-    <tr>
-        <td>
-          <label class="label">{{ dct.userid }}&nbsp
-          <input name="qty" type="number" class="input input-primary input-bordered input-sm" min="0" value="0"/>
-          </label>
+      <tr>
+        <td class="flex">
+          <div class="flex">
+            <input class="hidden" name="userid" type="text" value="{{dct.userid}}" hidden/>
+            <span class="label">{{ dct.userid }}</span>
+            <input name="qty" type="number" class="mx-3 input input-primary input-bordered input-md label" oninput="qtyChg()" min="0" value="0" step="1" required/>
+            <p class="label"><span class="label">0</span>Lot(s)</p>
+          </div>
         </td>
       </tr>
       {% endfor %}
+      <tr>
         <td colspan="3">
-          <input type="submit" class="btn btn-primary btn-outline btn-block" value="SEND"/>
+          <input type="submit" class="btn btn-primary btn-outline w-60" value="SEND"/>
+          <input type="reset" class="btn btn-primary btn-outline w-20"/>
         </td>
       </tr>
     </table>
 </form>
 {% endif %}
+<div class="toast" id="toast-container" style="position: fixed; right: 2%; top: 5%; max-width: 33%; display: flex; flex-direction: column-reverse; align-items: flex-end;">
+</div>
 {% endblock content %}

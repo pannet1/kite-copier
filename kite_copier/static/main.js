@@ -1,15 +1,6 @@
 const debugScript = false;
 
-const sync_frm_clr = (bors) => {
-  const frm = document.getElementById('frm')
-  if (bors=='BUY') {
-    frm.classList.remove('bg-red-300');
-    frm.classList.add('bg-green-500');
-  } else {
-    frm.classList.add('bg-red-300');
-    frm.classList.remove('bg-green-500');
-  }
-}
+
 
 const tblColCnt = (tableId, colNumber, ttlTagName) =>
   {

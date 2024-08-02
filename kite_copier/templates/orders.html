@@ -1,80 +1,194 @@
 {% extends "base.html" %}
-      {% block content %}
-        <div class="mb-5 overflow-x-auto">
-          {% if body %}
-          <table id="table" class="table w-full">
-            <thead>
-            <tr>
-            {% for key in body[0].keys() %}
-                <th>{{ key }}</th>
-            {% endfor %}
-            </tr>
-            </thead>
-            <tbody>
-              {% for dct in body %}
-              <tr>
-                <td>{{  dct.userid }}</td>
-                <td>{{  dct.order_id }}</td>
-                <td>{{  dct.exchange }}</td>
-                <td>{{  dct.tradingsymbol }}</td>
-                <td>{{  dct.quantity }}</td>
-                <td>{{  dct.product }}</td>
-                <td>{{  dct.price }}</td>
-                <td>{{  dct.trigger_price }}</td>
-                <td>{{  dct.order_type }}</td>
-                <td>
-                  {% if dct.transaction_type == 'BUY' %}
-                  <div class="text-bold text-lg bg-clip-content bg-success text-white text-center">
-                  {% else %}
-                  <div class="text-bold text-lg bg-clip-content bg-error text-white text-center">
-                  {% endif %}
-                    {{  dct.transaction_type }}
-                  </div>
-                </td>
-                <td>
-                    {% if dct.status == 'REJECTED' %}
-                    <div class="badge badge-error">
-                    {% elif dct.status == 'COMPLETE' %}
-                    <div class="badge badge-success">
-                    {% else %}
-                    <div class="badge">
-                    {% endif %}
-                    {{  dct.status }}
-                    </div>
-                </td>
-                <td>
-                {% if dct.status_message == None %}
-                  &nbsp;
-                  {% else %}
-                  <div class="tooltip tooltip-error" 
-                  data-tip="{{  dct.status_message }}">
-                  <button class="btn btn-xs btn-error">?</button>
-                  </div>
-                {% endif %}
-                </td>
-              </tr>
-          </tr>
-          {% endfor %}
-
-            </tbody>
-            <tfoot>
-              <tr>
-
-              </tr>
-            </tfoot>
-          </table>
-        {% else %}
-          <div class="hero min-h-screen" style="background-image: url(./static/no_data.jpg);">
-            <div class="hero-overlay bg-blend-overlay"></div>
-            <div class="hero-content text-center text-neutral-content">
-              <div class="max-w-md">
+{% block content %}
+<div class="mb-5 overflow-x-auto">
+  {% if body %}
+  <!-- <table id="table" class="table w-full"> -->
+  <table id="table" class="table table-xs w-full">
+    <thead>
+      <tr>
+        {% for key in body[0].keys() %}
+          <th>{{ key }}</th>
+      {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      <!-- {% set body1 = body[0].values() %} -->
+      {% for dct in body %}
+      <tr>
+        <td style="position: sticky; z-index: 11; left:0;">{{  dct.userid }}</td>  
+        <!-- OrderID & buttons -->
+        <td class="grid gap-2 hover:gap-4 justify-items-center" data-orderid="{{dct.order_id}}" data-userid="{{dct.userid}}" data-symbol="{{dct.tradingsymbol}}" data-product="{{dct.product}}" data-order="{{dct.order_type}}" data-side="{{dct.transaction_type}}" data-variety="{{dct.variety}}">
+          <!-- Order ID -->
+          <div class="label label-text">
+            {{ dct.order_id }}
+          </div>
+          <!-- Cancel all orders button -->
+          {% set orderStatus = dct.status.upper() %}
+          {% if orderStatus not in ('COMPLETE', 'CANCELLED', 'REJECTED') %}
+          <Button class="btn btn-block btn-md tooltip" data-tip="Cancel this Order" onclick="cancelOrder(event)"> Cancel Order </Button>
+          <Button class="btn btn-block btn-md btn-secondary tooltip" data-tip="Modify All Orders" onclick="modifyOrder(event)"> Modify All Orders </Button>
+          {% endif %}
+          <!-- Modify all orders button -->
+        </td>
+        <td>{{  dct.exchange }}</td>
+        <td>{{  dct.tradingsymbol }}</td>
+        <td>{{  dct.quantity }}</td>
+        <td>{{  dct.product }}</td>
+        <td>{{  dct.price }}</td>
+        <td>{{  dct.trigger_price }}</td>
+        <td>{{  dct.order_type }}</td>
+        <td>
+          {% if dct.transaction_type == 'BUY' %}
+          <div class="bg-green-500 text-bold text-lg bg-clip-content text-white text-center">
+          {% else %}
+          <div class="bg-red-500 text-bold text-lg bg-clip-content text-white text-center">
+            {% endif %}
+            {{  dct.transaction_type }}
+          </div>
+        </td>
+        <td>
+          {% if orderStatus == "COMPLETE" %}
+          <div class="badge badge-success">
+            {% elif orderStatus in ("CANCELLED", "REJECTED") %}
+            <div class="badge badge-error">
+              {% else %}
+            <div class="badge badge-warning">
+            {% endif %}
+            {{  dct.status }}
+          </div>
+        </td>
+        <td>
+          {% if dct.status_message == None %}
+          <div class="align-item"> &nbsp; - </div>
+          {% else %}
+          <div class="tooltip tooltip-error" 
+          data-tip="{{  dct.status_message[:45] }} ...">
+          <button class="btn btn-xs btn-error">?</button>
+        </div>
+        {% endif %}
+      </td>
+      <td>{{ dct.variety.upper() }}</td>
+    </tr>
+  </tr>
+  {% endfor %}
+  
+</tbody>
+<tfoot>
+  <tr> </tr>
+</tfoot>
+</table>
+{% else %}
+<div class="hero min-h-screen" style="background-image: url(./static/no_data.jpg);">
+  <div class="hero-overlay bg-blend-overlay"></div>
+  <div class="hero-content text-center text-neutral-content">
+    <div class="max-w-md">
                 <h1 class="mb-5 text-5xl font-bold">Happy Trading</h1>
-                <p class="mb-5">Are you ready to play today</p>
+                <p class="mb-5">Are you ready to play today?</p>
               </div>
             </div>
           </div>
         {% endif %}
         </div>
+      
+    <div class="toast" id="toast-container" style="position: fixed; right: 2%; top: 5%; max-width: 33%; display: flex; flex-direction: column-reverse; align-items: flex-end;">
+    </div>
      {% endblock content %}
+
+
+{% block js1 %}
+<script>
+  const audioElement = document.getElementById('notificationSound');
+  const toastDiv = document.getElementById('toast-container');
+  
+  async function Request(url, options){
+    const resp = await fetch(url, options);
+    const data = await resp.json();
+    return Promise.resolve(data);
+    console.log("from request:",data);
+  }
+
+  function cancelOrder(e) {
+
+    audioElement.currentTime = 0.20
+    audioElement.play();
+    const td = e.target.parentElement
+    const btn = e.target
+    btn.disabled = true
+
+    // then take out data one by one from dataset
+    let data = {
+      userid: td.dataset.userid,
+      orderid: td.dataset.orderid,
+      variety: td.dataset.variety.toLowerCase()
+    }
+    // now send this data to backend and show the status of msg.
+    url = `/orders/${data.userid}/${data.orderid}`
+    if(data.variety != "regular"){
+      url += `?variety=${data.variety}`
+    }
+    options = { method: 'DELETE'}
+    Request(url, options).then(resp => {
+      data = resp
+      data.color = "success"
+      data.btn = btn
+      if (resp.status != "ok"){
+        data.color = "error"
+        data.data = resp.msg
+      } else if(resp.status == 'ok'){
+        td.removeChild(btn)
+      }
+      console.log(`[${Date()}] status: ${data.status}, data: ${data.data}`)
+      createToast(data)
+    })  // end of Request function.
+  } // end of cancelOrder
+
+
+  function createToast(data) {
+    // data object should have data, color, time, td, btn
+    if (data.time == undefined){
+      data.time = 5
+    } 
+    const toast = document.createElement('div')
+      toast.classList.add('alert', `alert-${data.color}`, 'toast', 'mb-4')
+      toast.style = 'width: fit-content;'
+      toast.innerHTML += `<span>${data.data}</span>`
+      toastDiv.appendChild(toast)
+      setTimeout(() => {
+        toastDiv.removeChild(toast);
+        data.btn.disabled = false
+      }, data.time*1000); // 5000 milliseconds = 5 seconds
+  }
+
+
+  function modifyOrder(e) {
+    // 1. need to send basic data like exchange, order, product, etc.
+    const audioElement = document.getElementById('notificationSound');
+    audioElement.currentTime = 0.08
+    audioElement.play();
+    const btn = e.target.parentElement
+    const reqD = {
+      symbol: btn.dataset.symbol,
+      product: btn.dataset.product,
+      order: btn.dataset.order,
+      side: btn.dataset.side,
+    }
+    const url = `/bulk_orders?symbol=${reqD.symbol}&product=${reqD.product}&order=${reqD.order}&side=${reqD.side}`
+    fetch(url)
+    .then(res => res.json())
+    .then((resd) => {
+      const data = resd
+      // now you can show popup card for the status.
+      if (data.status === "ok") {
+        console.log('Order Modified:', data)
+      } else{
+        console.log('Error while modifying Order:', data)
+      }
+    })
+    // 2. then based on it, orders will be received by which we have to give option that what we can modify things like - orderType, quantity, price, triggerPrice, disclosedQuantity, validity.
+    // based on user selected options send these orders and place modify order for the each orders of the list.
+  } // end of modifyOrder
+
+</script>
+{% endblock js1 %}
 
 

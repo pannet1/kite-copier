@@ -1,7 +1,117 @@
+const form = document.getElementById('orderFrm');
+// const submitBtn = form.getElementById('orderFrm');
+const submitButton = form.querySelector('input[type="submit"]');
+const toastDiv = document.getElementById('toast-container');
+
+async function Request(url, options){
+  const resp = await fetch(url, options);
+  const data = await resp.json();
+  return Promise.resolve(data);
+}
+
+
+
+form.addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  // processing form data.
+  const formData = new FormData(form);
+  const jsonData = {data: {}};
+  var currentUserId = null;
+  for (const [key, value] of formData.entries()){
+    if (key == 'userid'){
+      currentUserId = value
+    } else if(key == 'qty'){
+      qty = parseInt(value);
+      if (qty > 0){
+        jsonData.data[currentUserId] = qty
+      }
+    } else {
+      jsonData[key] = value
+    }
+  }
+  dlen = Object.keys(jsonData.data).length
+  if (dlen > 0){
+    submitButton.disabled = true;
+    place_order(jsonData)
+  } else{
+    console.log(`[${Date()}] Can't place order with ${dlen} qty.`)
+  }
+  // waiting for few seconds before enabling the submit button.
+  setTimeout(() => {
+    submitButton.disabled = false;
+  }, 3000);
+})
+
+
+// Code to send post request with data.
+function place_order(data){
+  url = '/orders'
+  // 1. send request with data
+  Request(url, {
+    method: 'POST',
+    headers: {'content-type': 'application/json'},
+    body: JSON.stringify(data)
+  }).then(resd => {
+    if ('status' in resd){
+      list_status(resd)
+    } else{
+      console.log(`[${Date()}] Something is Wrong:`, resd)
+    }
+  })
+}
+
+
+function list_status(resd){
+  let color = 'success'
+  let data = resd.data
+  if (resd.status != 'ok'){
+    data = resd.msg
+    color = resd.status
+  }
+  if (typeof data == "string"){
+    data = [data]
+  }
+  console.log(`[${Date()}] status: ${resd.status}, data:`, data)
+  data.forEach(elm => {
+    createToast({data: elm, color: color})
+  });
+
+}   // end of list_status.
+
+function createToast(data) {
+  // data object should have data, color, time
+  if (data.time == undefined){
+    data.time = 5
+  }
+  const toast = document.createElement('div')
+    toast.classList.add('alert', `alert-${data.color}`, 'toast', 'mb-4')
+    toast.style = 'width: fit-content;'
+    toast.innerHTML += `<span>${data.data}</span>`
+    toastDiv.appendChild(toast)
+    setTimeout(() => {
+      toastDiv.removeChild(toast);
+    }, data.time*1000); // 5000 milliseconds = 5 seconds
+}
+
+
+
 // consumes sync_frm_clr from main.js
+const sync_frm_clr = (bors) => {
+  const frm = document.getElementById('orderFrm')
+  if (bors=='BUY') {
+    frm.classList.remove('bg-red-300');
+    frm.classList.add('bg-green-500');
+  } else {
+    frm.classList.add('bg-red-300');
+    frm.classList.remove('bg-green-500');
+  }
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const txn = document.getElementById('txn')
   txn.checked = true
+  sync_frm_clr('BUY')
   txn.onclick = function() {
     if (txn.checked == true) {
       sync_frm_clr('BUY')
@@ -9,11 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
       sync_frm_clr('SELL')
     }
   }
-  if (txn.checked == true)
-    sync_frm_clr('BUY')
 });
 
-const copyButton = document.getElementById('copyButton');
+const copyButton = document.getElementById('');
 copyButton.addEventListener('click', () => {
   // unhide the button class 
   const btn_basket = document.getElementById('btn_basket');
