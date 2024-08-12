@@ -123,15 +123,7 @@ const mdlOrderModify = (status) =>  {
   const modal4 = document.getElementById('my-modal-4') 
   if (status == 'DONT_DO_ANYTHING') {
     modal4.click()
-  } else { 
-   const key = buildLtpUrl() 
-    if (key.length > 0)
-    {
-      get_data('/ltp/', key).then(data => {
-      document.getElementById('ltp').value = data[0][0];
-      });
-    }
-  }
+  } 
 }
 
 const btnMod = document.getElementsByClassName('btn-mod')

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{%  block form  %}
+  {% for o in subs %}
+    <form method='post' action='/bulk_modified_order' autocomplete="off"
+      {% if o.transactiontype =='BUY'  %}
+        class="p-5 bg-green-500 w-full max-w-lg"
+      {% else %}
+        class="p-5 bg-red-300 w-full max-w-lg"
+      {% endif %}
+      >
+      <input type="hidden" name="txn_type" value="{{ o.transactiontype }}">
+      <div class="btn-group lg">
+        <input type="radio" name="otype" value="1" data-title="LMT" class="btn" checked />
+        <input type="radio" name="otype" value="2" data-title="MKT" class="btn"  />
+        <input type="radio" name="otype" value="3" data-title="SL" class="btn" />
+        <input type="radio" name="otype" value="4" data-title="SL-M" class="btn" />
+      </div>
+      <div class="form-control relative inline-block">
+        <label class="label">
+        <span class="label-text">Product</span>
+        </label>
+        <input type="text" name="producttype" class="input input-ghost" readonly=readonly style="width:49%"
+        value={% if o.producttype |length>0 %} {{ o.producttype }}{% endif %}
+        >
+      <div class="form-control relative inline-block w-full">
+        <label class="label">
+          <span class="label-text">Trading Symbol</span>
+        </label>
+        <input type="text" name='tradingsymbol' class="input input-ghost" readonly=readonly style="width:81%"
+        value={% if o.tradingsymbol |length>0 %} {{ o.tradingsymbol }}{% endif %}
+        >
+        <input name="exchange" type="text" readonly="readonly" class="input input-ghost float-right" style="width:4.5rem"
+        value={% if o.exchange |length>0 %} {{ o.exchange }}{% endif %}
+        >
+        <input name="symboltoken" type="hidden"
+        value={% if o.symboltoken |length>0 %} {{ o.symboltoken }}{% endif %}
+        >
+      </div>
+      <div class="form-control relative inline-block">
+        <label class="label">
+          <span class="label-text">Price</span>
+          <span class="label-text">Trigger Price</span>
+        </label>
+        <input type="text" name="triggerprice" class="input input-bordered float-right" style="width:49%"
+        value={% if o.trigger |int >-1 %} {{ o.trigger }}{% endif %}
+        >
+        <input type="text" name="price" class="input input-bordered" style="width:49%"
+        value={{ o.price }}
+        >
+      </div>
+  {% endfor %}
+
+      <table class="mx-auto table table-compact" style="margin-top:30px">
+        {% if th %}
+        <tr>
+          {% for k in th %}
+              <th>{{ k }}</th>
+          {% endfor %}
+        </tr>
+          {% for td in data %}
+        <tr>
+            <td><input class="input-sm input" name="client_name" type='hidden' value='{{ td[0] }}'> {{ td[0] }}  </td>
+            <td><input style="width:10em" name="order_id" type='hidden'
+                                          value='{{ td[1] }}'>{{ td[1] }}</td>
+            <td>{{ td[2] }}</td>
+            <td><input style="width:5em" name="quantity" value='{{ td[3] }}'></td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+          <tr>
+            <td colspan="5">
+              <input type="submit" class="btn btn-outline btn-block" value="SEND"/>
+            </td>
+          </tr>
+        </table>
+    </form>
+{% endblock form %}
+

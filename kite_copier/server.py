@@ -1,15 +1,16 @@
-from fastapi import FastAPI, Request, Form
+import asyncio
+import inspect
+from typing import Dict, List, Optional
+
+from fastapi import FastAPI, Form, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from user import load_all_users, User
-from symbols import dump, read
-from constants import logging, S_DATA
-from typing import List, Dict, Optional
-import inspect
-import asyncio
 
+from constants import S_DATA, logging
+from symbols import dump, read
+from user import User, load_all_users
 
 # Load Instrument file.
 
@@ -83,7 +84,7 @@ async def home(request: Request):
 @app.get("/order_cancel/")
 def get_order_cancel(request: Request, client_name: str, order_id: str):
     obj_client = get_user_by_id(client_name)
-    kwargs = {"order_id": order_id }
+    kwargs = {"order_id": order_id}
     try:
         _ = obj_client._broker.order_cancel(**kwargs)
     except Exception as e:
@@ -161,19 +162,133 @@ def search(request: Request, sym: str):
     return data
 
 
-@app.get("/modify_orders")
-def modify_orders(request: Request):
+@app.get("/bulk_modify_order/", response_class=HTMLResponse)
+async def get_bulk_modify_order(
+    request: Request,
+    exchange: str,
+    tradingsymbol: str,
+    symboltoken: str,
+    transactiontype: str,
+    producttype: str,
+    status: str,
+    ordertype: str,
+):
     ctx = {"request": request, "title": inspect.stack()[0][3], "pages": pages}
-
-    symbol = request.query_params.get("symbol")
-    side = request.query_params.get("side")
-    status = request.query_params.get("status")
-    return jt.TemplateResponse("new.html", ctx)
+    subs = {
+        "exchange": exchange,
+        "tradingsymbol": tradingsymbol,
+        "symboltoken": symboltoken,
+        "transactiontype": transactiontype,
+        "ordertype": ordertype,
+        "status": status,
+        "producttype": producttype,
+    }
+    mh, md, th, td = orders(args=None)
+    if len(th) > 0:
+        ords = []
+        for tr in td:
+            ords.append(dict(zip(th, tr)))
+        fltr = []
+        for ord in ords:
+            success = True
+            for k, v in subs.items():
+                if ord.get(k) != v:
+                    success = False
+                    break
+            if success:
+                fltr.append(ord)
+        if any(fltr):
+            fdata = []
+            for f in fltr:
+                print(f)
+                fdata.append(
+                    [
+                        f.get("client_name"),
+                        f.get("orderid"),
+                        str(f.get("price")) + "/" + str(f.get("triggerprice")),
+                        f.get("quantity"),
+                    ]
+                )
+            ctx["th"], ctx["data"] = (
+                ["client_name", "orderid", "prc/trgr", "quantity"],
+                fdata,
+            )
+    _, flt_ltp = get_ltp(subs["exchange"], subs["tradingsymbol"], subs["symboltoken"])
+    subs["price"] = flt_ltp[0][0]
+    subs["trigger"] = 0
+    ctx["subs"] = [subs]
+    return jt.TemplateResponse("orders_modify.html", ctx)
 
 
 """
  post
 """
+
+
+@app.post("/bulk_modified_order/")
+async def post_bulk_modified_order(
+    request: Request,
+    client_name: List[str],
+    order_id: List[str],
+    quantity: List[str],
+    txn_type: str = Form(),
+    exchange: str = Form(),
+    symboltoken: str = Form(),
+    tradingsymbol: str = Form(),
+    otype: int = Form("0"),
+    producttype: str = Form(),
+    triggerprice: str = Form(),
+    price: str = Form(),
+):
+    """
+    post modified orders in bulk
+    """
+    mh, md, th, td = [], [], [], []
+    if otype == 1:
+        ordertype = "LIMIT"
+        variety = "NORMAL"
+    elif otype == 2:
+        ordertype = "MARKET"
+        variety = "NORMAL"
+    elif otype == 3:
+        ordertype = "STOPLOSS_LIMIT"
+        variety = "STOPLOSS"
+    elif otype == 4:
+        ordertype = "STOPLOSS_MARKET"
+        variety = "STOPLOSS"
+
+    try:
+        for i in range(len(client_name)):
+            obj_client = get_broker_by_id(client_name[i])
+            params = {
+                "orderid": order_id[i],
+                "variety": variety,
+                "tradingsymbol": tradingsymbol,
+                "symboltoken": symboltoken,
+                "transactiontype": txn_type,
+                "exchange": exchange,
+                "ordertype": ordertype,
+                "producttype": producttype,
+                "price": price,
+                "quantity": quantity[i],
+                "triggerprice": triggerprice,
+                "duration": "DAY",
+            }
+            _, _, _, _ = order_modify_by_user(obj_client, params)
+        """
+            to be removed
+        ctx = {"request": request, "title": inspect.stack()[0][3], 'pages': pages}
+        if len(mh) > 0:
+            ctx['mh'], ctx['md'] = mh, md
+        if (len(th) > 0):
+            ctx['th'], ctx['data'] = th, td
+        return jt.TemplateResponse("table.html", ctx)
+        """
+    except Exception as e:
+        return JSONResponse(content={"E bulk order modifying": str(e)}, status_code=400)
+    else:
+        redirect_url = request.url_for("get_orders")
+        return RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
 
 
 @app.post("/orders/", response_class=RedirectResponse)
@@ -216,7 +331,7 @@ async def post_orders(
                 err.append(f"{str(e)} occured while placing order for {uid}.")
     if len(err) > 0:
         raise HTTPException(status_code=400, detail=err)
-    return "/orders"
+    return "/orders/"
 
 
 @app.on_event("startup")
@@ -228,31 +343,3 @@ async def startup_event():
 
 if __name__ == "__main__":
     __import__("uvicorn").run(app, host="0.0.0.0", port=8000)
-
-"""
-    not implemented 
-@app.get("/position/{userid}", response_class=HTMLResponse)
-async def positionbook(request: Request, userid: str):
-    ctx = {
-        "request": request,
-        "title": inspect.stack()[0][3],
-        "pages": pages,
-        "th": ["message"],
-        "data": [f"No Data Found for {userid}."],
-    }
-    user = get_user_by_id(userid)
-    if user:
-        body = []
-        data = {"userid": userid}
-        poss = user.get_positions()
-        for pos in poss:
-            if not pos:
-                continue
-            data.update(pos)
-            th, td = list(data.keys()), list(data.values())
-            body.append(td)
-        if len(body) > 0:
-            ctx["th"], ctx["data"] = th, body
-    return jt.TemplateResponse("table.html", ctx)
-
-"""
