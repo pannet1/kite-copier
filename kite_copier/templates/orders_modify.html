@@ -1,14 +1,13 @@
 {% extends "base.html" %}
 {%  block form  %}
   {% for o in subs %}
-    <form method='post' action='/bulk_modified_order' autocomplete="off"
-      {% if o.transactiontype =='BUY'  %}
+    <form method='post' action='/bulk_modify_order' autocomplete="off"
+      {% if o.transaction_type =='BUY'  %}
         class="p-5 bg-green-500 w-full max-w-lg"
       {% else %}
         class="p-5 bg-red-300 w-full max-w-lg"
-      {% endif %}
-      >
-      <input type="hidden" name="txn_type" value="{{ o.transactiontype }}">
+      {% endif %}>
+      <input type="hidden" name="txn_type" value="{{ o.transaction_type }}">
       <div class="btn-group lg">
         <input type="radio" name="otype" value="1" data-title="LMT" class="btn" checked />
         <input type="radio" name="otype" value="2" data-title="MKT" class="btn"  />
@@ -17,11 +16,11 @@
       </div>
       <div class="form-control relative inline-block">
         <label class="label">
-        <span class="label-text">Product</span>
+          <span class="label-text">Product</span>
         </label>
         <input type="text" name="producttype" class="input input-ghost" readonly=readonly style="width:49%"
-        value={% if o.producttype |length>0 %} {{ o.producttype }}{% endif %}
-        >
+        value={% if o.product |length>0 %} {{ o.product }}{% endif %}>
+      </div>
       <div class="form-control relative inline-block w-full">
         <label class="label">
           <span class="label-text">Trading Symbol</span>
@@ -32,21 +31,16 @@
         <input name="exchange" type="text" readonly="readonly" class="input input-ghost float-right" style="width:4.5rem"
         value={% if o.exchange |length>0 %} {{ o.exchange }}{% endif %}
         >
-        <input name="symboltoken" type="hidden"
-        value={% if o.symboltoken |length>0 %} {{ o.symboltoken }}{% endif %}
-        >
+        <input name="symboltoken" type="hidden" value={% if o.instrument_token %} {{ o.instrument_token }}{% endif %}>
       </div>
       <div class="form-control relative inline-block">
         <label class="label">
           <span class="label-text">Price</span>
           <span class="label-text">Trigger Price</span>
         </label>
-        <input type="text" name="triggerprice" class="input input-bordered float-right" style="width:49%"
-        value={% if o.trigger |int >-1 %} {{ o.trigger }}{% endif %}
-        >
+        <input type="text" name="triggerprice" class="input input-bordered float-right" style="width:49%" value=0>
         <input type="text" name="price" class="input input-bordered" style="width:49%"
-        value={{ o.price }}
-        >
+        value=0>
       </div>
   {% endfor %}
 
@@ -59,11 +53,10 @@
         </tr>
           {% for td in data %}
         <tr>
-            <td><input class="input-sm input" name="client_name" type='hidden' value='{{ td[0] }}'> {{ td[0] }}  </td>
-            <td><input style="width:10em" name="order_id" type='hidden'
-                                          value='{{ td[1] }}'>{{ td[1] }}</td>
-            <td>{{ td[2] }}</td>
-            <td><input style="width:5em" name="quantity" value='{{ td[3] }}'></td>
+            <td> <input class="input-sm input" name="client_name" type='hidden' value='{{ td.placed_by }}'> {{ td.placed_by }} </td>
+            <td> <input style="width:10em" name="order_id" type='hidden' value='{{ td.order_id }}'> {{ td.order_id }} </td>
+            <td> {{ td.price }}/{{td.trigger_price}} </td>
+            <td> <input style="width:5em" name="quantity" value='{{ td.quantity }}'> </td>
           </tr>
           {% endfor %}
           {% endif %}

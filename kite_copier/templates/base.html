@@ -143,7 +143,7 @@ const getCancelOrder = (otype) => {
   if (order_id.value.length > 0) {
     key = key + '&order_id=' + order_id.value; }
   else { return }
-  get_data('/order_cancel/', key).then(result => {
+  get_data('/order_cancel', key).then(result => {
       // only change is the below
       console.log(result)
   })

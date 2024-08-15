@@ -92,11 +92,17 @@ class User(object):
             return []
 
     @custom_exception_handler
-    def get_orders(self, order_id=None) -> list:
+    def get_orders(self, order_id=None, status=None) -> list:
         if order_id is not None:
             data: list = self._broker.kite.order_history(order_id=order_id)
         else:
             data: list = self._broker.kite.orders()
+
+        if not status: pass
+        elif status.lower() == "open":
+            data = [order for order in data if order and order.get("status") not in ("COMPLETE", "CANCELED", "REJECTED")]
+        elif status.lower() == "close":
+            data = [order for order in data if order and order.get("status") in ("COMPLETE", "CANCELED", "REJECTED")]
         return self.__clean_data(data)
 
     @custom_exception_handler
@@ -176,7 +182,7 @@ def load_all_users(
 
 
 if __name__ == "__main__":
-    ma, us = load_all_users("../../", "users_kite.xlsx")
-    print(ma._broker.positions)
-    for k, v in us.items():
-        print(v._max_loss)
+    us = load_all_users()
+    for user in us:
+        if not user._disabled:
+            print(user._broker.positions)

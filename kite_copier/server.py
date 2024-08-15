@@ -2,9 +2,9 @@ import asyncio
 import inspect
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Form, Request, status
 from fastapi.exceptions import HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -32,17 +32,19 @@ def get_user_by_id(userid: str) -> User:
     return objs_usr.get(userid, None)
 
 
-def get_all_orders(userid=None):
+def get_all_orders(userid=None, status=None):
     if userid is not None:
         user: User = get_user_by_id(userid)
         if user:
-            return user.get_orders()
+            return user.get_orders(status=status)
         else:
             return
     else:
-        data = {}
-        for user in objs_usr:
-            data[user._userid] = user.get_orders()
+        data = []
+        for user in objs_usr.values():
+            order = user.get_orders(status=status)
+            if order:
+                data.extend(order[:])
         return data
 
 
@@ -81,14 +83,17 @@ async def home(request: Request):
     return jt.TemplateResponse("index.html", ctx)
 
 
-@app.get("/order_cancel/")
+@app.get("/order_cancel")
 def get_order_cancel(request: Request, client_name: str, order_id: str):
     obj_client = get_user_by_id(client_name)
-    kwargs = {"order_id": order_id}
+    kwargs = dict(order_id=order_id, variety="regular")
     try:
-        _ = obj_client._broker.order_cancel(**kwargs)
+        # _ = obj_client._broker.order_cancel(**kwargs)
+        d = obj_client._broker.kite.cancel_order(**kwargs)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    else:
+        return JSONResponse(content={'status': 'success'})
 
 
 @app.get("/new", response_class=HTMLResponse)
@@ -150,7 +155,6 @@ def orders(request: Request):
         if any(lst):
             lst = [{"userid": uuid, **dct} for dct in lst]
             ctx["body"].extend(lst)
-    print(ctx["body"])
     return jt.TemplateResponse("orders.html", ctx)
 
 
@@ -162,60 +166,42 @@ def search(request: Request, sym: str):
     return data
 
 
-@app.get("/bulk_modify_order/", response_class=HTMLResponse)
+@app.get("/bulk_modify_order", response_class=HTMLResponse)
 async def get_bulk_modify_order(
     request: Request,
     exchange: str,
     tradingsymbol: str,
-    symboltoken: str,
+    # symboltoken: str,
     transactiontype: str,
     producttype: str,
     status: str,
     ordertype: str,
 ):
     ctx = {"request": request, "title": inspect.stack()[0][3], "pages": pages}
-    subs = {
-        "exchange": exchange,
-        "tradingsymbol": tradingsymbol,
-        "symboltoken": symboltoken,
-        "transactiontype": transactiontype,
-        "ordertype": ordertype,
-        "status": status,
-        "producttype": producttype,
-    }
-    mh, md, th, td = orders(args=None)
-    if len(th) > 0:
-        ords = []
-        for tr in td:
-            ords.append(dict(zip(th, tr)))
-        fltr = []
-        for ord in ords:
+    subs = dict(exchange=exchange,
+                tradingsymbol=tradingsymbol,
+                # symboltoken=symboltoken,
+                transaction_type=transactiontype,
+                order_type=ordertype,
+                status=status,
+                product=producttype
+        )
+    data = get_all_orders(status='open')
+    if data:
+        fdata = []
+        for ord in data:
             success = True
             for k, v in subs.items():
                 if ord.get(k) != v:
                     success = False
                     break
             if success:
-                fltr.append(ord)
-        if any(fltr):
-            fdata = []
-            for f in fltr:
-                print(f)
-                fdata.append(
-                    [
-                        f.get("client_name"),
-                        f.get("orderid"),
-                        str(f.get("price")) + "/" + str(f.get("triggerprice")),
-                        f.get("quantity"),
-                    ]
-                )
-            ctx["th"], ctx["data"] = (
-                ["client_name", "orderid", "prc/trgr", "quantity"],
-                fdata,
-            )
-    _, flt_ltp = get_ltp(subs["exchange"], subs["tradingsymbol"], subs["symboltoken"])
-    subs["price"] = flt_ltp[0][0]
-    subs["trigger"] = 0
+                fdata.append(ord)
+        if any(fdata):
+            ctx["th"], ctx["data"] = ["Client", "OrderID", "Price/Trigger", "Qty"], fdata
+            # _, flt_ltp = get_ltp(subs["exchange"], subs["tradingsymbol"], subs["symboltoken"])
+            # subs["price"] = flt_ltp[0][0]
+
     ctx["subs"] = [subs]
     return jt.TemplateResponse("orders_modify.html", ctx)
 
@@ -225,7 +211,7 @@ async def get_bulk_modify_order(
 """
 
 
-@app.post("/bulk_modified_order/")
+@app.post("/bulk_modify_order")
 async def post_bulk_modified_order(
     request: Request,
     client_name: List[str],
@@ -243,52 +229,33 @@ async def post_bulk_modified_order(
     """
     post modified orders in bulk
     """
-    mh, md, th, td = [], [], [], []
+    variety = "regular"
     if otype == 1:
         ordertype = "LIMIT"
-        variety = "NORMAL"
     elif otype == 2:
         ordertype = "MARKET"
-        variety = "NORMAL"
     elif otype == 3:
-        ordertype = "STOPLOSS_LIMIT"
-        variety = "STOPLOSS"
+        ordertype = "SL"
     elif otype == 4:
-        ordertype = "STOPLOSS_MARKET"
-        variety = "STOPLOSS"
-
+        ordertype = "SL-M"
+    
     try:
-        for i in range(len(client_name)):
-            obj_client = get_broker_by_id(client_name[i])
-            params = {
-                "orderid": order_id[i],
-                "variety": variety,
-                "tradingsymbol": tradingsymbol,
-                "symboltoken": symboltoken,
-                "transactiontype": txn_type,
-                "exchange": exchange,
-                "ordertype": ordertype,
-                "producttype": producttype,
-                "price": price,
-                "quantity": quantity[i],
-                "triggerprice": triggerprice,
-                "duration": "DAY",
-            }
-            _, _, _, _ = order_modify_by_user(obj_client, params)
-        """
-            to be removed
-        ctx = {"request": request, "title": inspect.stack()[0][3], 'pages': pages}
-        if len(mh) > 0:
-            ctx['mh'], ctx['md'] = mh, md
-        if (len(th) > 0):
-            ctx['th'], ctx['data'] = th, td
-        return jt.TemplateResponse("table.html", ctx)
-        """
+        for i, uid in enumerate(client_name):
+            user = get_user_by_id(uid)
+            if not user: continue
+            params = dict(
+                variety=variety,
+                order_id=order_id[i],
+                quantity=quantity[i],
+                price=price,
+                order_type=ordertype,
+                trigger_price=triggerprice
+            )
+            d = user._broker.kite.modify_order(**params)
     except Exception as e:
-        return JSONResponse(content={"E bulk order modifying": str(e)}, status_code=400)
+        return JSONResponse(content={"Error bulk order modifying": str(e)}, status_code=400)
     else:
-        redirect_url = request.url_for("get_orders")
-        return RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
+        return RedirectResponse("/orders", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.post("/orders/", response_class=RedirectResponse)
@@ -331,7 +298,7 @@ async def post_orders(
                 err.append(f"{str(e)} occured while placing order for {uid}.")
     if len(err) > 0:
         raise HTTPException(status_code=400, detail=err)
-    return "/orders/"
+    return RedirectResponse("/orders", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @app.on_event("startup")
