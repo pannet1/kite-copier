@@ -25,7 +25,7 @@ objs_usr = return_users()
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 jt = Jinja2Templates(directory="templates")
-pages = ["home", "positions", "orders", "new"]
+pages = ["home", "positions", "orders", "all", "new"]
 
 
 def get_user_by_id(userid: str) -> User:
@@ -93,7 +93,7 @@ def get_order_cancel(request: Request, client_name: str, order_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     else:
-        return JSONResponse(content={'status': 'success'})
+        return JSONResponse(content={"status": "success"})
 
 
 @app.get("/new", response_class=HTMLResponse)
@@ -132,6 +132,39 @@ async def positions(request: Request):
 
 @app.get("/orders")
 def orders(request: Request):
+    ctx = {"request": request, "title": inspect.stack()[0][3], "pages": pages}
+    ctx["body"] = []
+    statuses = ["OPEN", "TRIGGER PENDING"]
+    keys = [
+        "order_id",
+        "exchange",
+        "tradingsymbol",
+        "quantity",
+        "product",
+        "price",
+        "trigger_price",
+        "order_type",
+        "transaction_type",
+        "status",
+        "status_message",
+    ]
+    for uuid, user in objs_usr.items():
+        lst = user.get_orders()
+        if not lst:
+            continue
+        lst = [{key: dct[key] for key in keys} for dct in lst]
+        if any(lst):
+            lst = [
+                {"userid": uuid, **dct}
+                for dct in lst
+                if dct["status"].upper() in statuses
+            ]
+            ctx["body"].extend(lst)
+    return jt.TemplateResponse("orders.html", ctx)
+
+
+@app.get("/all")
+def all(request: Request):
     ctx = {"request": request, "title": inspect.stack()[0][3], "pages": pages}
     ctx["body"] = []
     keys = [
@@ -178,15 +211,16 @@ async def get_bulk_modify_order(
     ordertype: str,
 ):
     ctx = {"request": request, "title": inspect.stack()[0][3], "pages": pages}
-    subs = dict(exchange=exchange,
-                tradingsymbol=tradingsymbol,
-                # symboltoken=symboltoken,
-                transaction_type=transactiontype,
-                order_type=ordertype,
-                status=status,
-                product=producttype
-        )
-    data = get_all_orders(status='open')
+    subs = dict(
+        exchange=exchange,
+        tradingsymbol=tradingsymbol,
+        # symboltoken=symboltoken,
+        transaction_type=transactiontype,
+        order_type=ordertype,
+        status=status,
+        product=producttype,
+    )
+    data = get_all_orders(status="open")
     if data:
         fdata = []
         for ord in data:
@@ -198,7 +232,12 @@ async def get_bulk_modify_order(
             if success:
                 fdata.append(ord)
         if any(fdata):
-            ctx["th"], ctx["data"] = ["Client", "OrderID", "Price/Trigger", "Qty"], fdata
+            ctx["th"], ctx["data"] = [
+                "Client",
+                "OrderID",
+                "Price/Trigger",
+                "Qty",
+            ], fdata
             # _, flt_ltp = get_ltp(subs["exchange"], subs["tradingsymbol"], subs["symboltoken"])
             # subs["price"] = flt_ltp[0][0]
 
@@ -238,22 +277,25 @@ async def post_bulk_modified_order(
         ordertype = "SL"
     elif otype == 4:
         ordertype = "SL-M"
-    
+
     try:
         for i, uid in enumerate(client_name):
             user = get_user_by_id(uid)
-            if not user: continue
+            if not user:
+                continue
             params = dict(
                 variety=variety,
                 order_id=order_id[i],
                 quantity=quantity[i],
                 price=price,
                 order_type=ordertype,
-                trigger_price=triggerprice
+                trigger_price=triggerprice,
             )
             d = user._broker.kite.modify_order(**params)
     except Exception as e:
-        return JSONResponse(content={"Error bulk order modifying": str(e)}, status_code=400)
+        return JSONResponse(
+            content={"Error bulk order modifying": str(e)}, status_code=400
+        )
     else:
         return RedirectResponse("/orders", status_code=status.HTTP_303_SEE_OTHER)
 
