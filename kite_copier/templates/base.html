@@ -1,175 +1,173 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <title>{{ title }}</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-    <link
-      href="../static/main.css"
-      rel="stylesheet"
-      type="text/css"
-    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+    <link href="../static/main.css" rel="stylesheet" type="text/css" />
     {% if title == 'new' %}
-    <link rel="stylesheet" href="../static/autocomplete.css">
-    {%  endif %}
+    <link rel="stylesheet" href="../static/autocomplete.css" />
+    {% endif %}
   </head>
   <body>
     <div class="mx-auto min-h-screen overflow-auto">
-    <!-- navigation -->
-    <div class="navbar bg-primary">
-      <div class="mx-auto navbar-center">
+      <!-- navigation -->
+      <div class="navbar bg-primary">
+        <div class="mx-auto navbar-center">
           <ul class="menu menu-horizontal px-1">
             {% for v in pages %}
-              <li><a 
-              {% if v == title %}
-                  class="active" 
-              {% endif %}
-              href='/{{ v }}'>{{ v }}</a></li>
+            <li>
+              <a
+                {%
+                if v==title
+                %}
+                class="active"
+                {%
+                endif
+                %}
+                href="/{{ v }}"
+                >{{ v }}</a
+              >
+            </li>
             {% endfor %}
           </ul>
+        </div>
       </div>
-    </div>
-    {% block form %}
-    {% endblock form %}
-    {% block content %}
-    {% endblock content %}
+      {% block form %} {% endblock form %} {% block content %} {% endblock
+      content %}
     </div>
     <script src="../static/main.js"></script>
-{% if title=='orders' %}
-<script> 
-/* consumed by modify and cancel order */ 
-const getRows = (my) => {
-  const tr =   my.parentNode.parentNode
-  const tdes = tr.children
-  let keys = []
-  for (i = 0; i< tdes.length; i++) {
-    inner = tdes[i].textContent
-    keys[i] = inner
-  }
-  console.log(keys)
-  let data = '';
-  if (keys[8] == 'LIMIT') {
-    data = 'LMT'
-  } 
-  else if(keys[8] == 'MARKET') {
-    data = 'MKT'  
-  }
-  else if(keys[8] == 'STOPLOSS_LIMIT') {
-    data = 'SL'  
-  }
-  else if(keys[8] == 'STOPLOSS_MARKET') {
-    data = 'SL-M'  
-  }
+    {% if title=='orders' %}
+    <script>
+      /* consumed by modify and cancel order */
+      const getRows = (my) => {
+        const tr = my.parentNode.parentNode;
+        const tdes = tr.children;
+        let keys = [];
+        for (i = 0; i < tdes.length; i++) {
+          inner = tdes[i].textContent;
+          keys[i] = inner;
+        }
+        console.log(keys);
 
-  const otype = document.querySelectorAll(`input[data-title=${data}]`)
-  otype[0].setAttribute('checked', 'checked') 
-  let pdata = '';
-  if (keys[5] == 'NRML') {
-    pdata = 'NRML' 
-  } 
-  else if(keys[5] == 'MIS') {
-    pdata = 'MIS'  
-  }
-  else if(keys[5] == 'CNC') {
-    pdata = 'CNC'  
-  } 
-  const ptype = document.querySelectorAll(`input[data-title=${pdata}]`)
-  ptype[0].setAttribute('checked', 'checked') 
-  const price = document.getElementById('price')
-  price.value = keys[6]
-  const trigger = document.getElementById('trigger')
-  trigger.value = keys[7]
-  const qty = document.getElementById('qty')
-  qty.value = keys[4]
-  const symbol = document.getElementById('symbol')
-  symbol.value = keys[3]
-  const txn = document.getElementById('txn')
-  if (keys[10] == 'BUY') {
-    txn.setAttribute('checked', 'checked') 
-  } else {
-    txn.removeAttribute('checked')
-  }
-  sync_frm_clr(keys[10])
+        let data = "";
+        if (keys[8] == "LIMIT") {
+          data = "LMT";
+        } else if (keys[8] == "MARKET") {
+          data = "MKT";
+        } else if (keys[8] == "SL") {
+          data = "SL";
+        } else if (keys[8] == "STOPLOSS_MARKET") {
+          data = "SL-M";
+        }
 
-  const exchange = document.getElementById('exchange')
-  exchange.value = keys[2]
-  const token = document.getElementById('token')
-  token.value = keys[13]
-  const order_id = document.getElementById('order_id')
-  order_id.value = keys[1]
-  // key10 is empty
-  // key11 is condition for this loop
-  if (keys[14] == 'cancelled') {
-    data = 'DONT_DO_ANYTHING'
-  } else
-  if (keys[14] == 'complete') {
-    data = 'DONT_DO_ANYTHING'
-  } else
-  if (keys[14] == 'rejected') {
-    data = 'DONT_DO_ANYTHING'
-  }
-  const client_name = document.getElementById('client_name')
-  client_name.value = keys[0]
-  const title = document.getElementById('title')
-  title.innerHTML = symbol.value + ' (' + client_name.value + ')'
-  return data
-}
+        const otype = document.querySelectorAll(`input[data-title=${data}]`);
+        otype[0].setAttribute("checked", "checked");
+        let pdata = "";
+        if (keys[5] == "NRML") {
+          pdata = "NRML";
+        } else if (keys[5] == "MIS") {
+          pdata = "MIS";
+        } else if (keys[5] == "CNC") {
+          pdata = "CNC";
+        }
 
-/* order modify */
-//  consumes get_data and buildLtpUrl 
-// requests.js
-const mdlOrderModify = (status) =>  {
-  const modal4 = document.getElementById('my-modal-4') 
-  if (status == 'DONT_DO_ANYTHING') {
-    modal4.click()
-  } 
-}
+        const ptype = document.querySelectorAll(`input[data-title=${pdata}]`);
+        ptype[0].setAttribute("checked", "checked");
+        const price = document.getElementById("price");
+        price.value = keys[6];
+        const trigger = document.getElementById("trigger");
+        trigger.value = keys[7];
+        const qty = document.getElementById("qty");
+        qty.value = keys[4];
+        const symbol = document.getElementById("symbol");
+        symbol.value = keys[3];
+        const txn = document.getElementById("txn");
+        if (keys[10] == "BUY") {
+          txn.setAttribute("checked", "checked");
+        } else {
+          txn.removeAttribute("checked");
+        }
+        sync_frm_clr(keys[10]);
 
-const btnMod = document.getElementsByClassName('btn-mod')
-for(let i = 0; i < btnMod.length; i++) {
-  btnMod[i].addEventListener('click', function() {
-    const order_status = getRows(this)
-    mdlOrderModify(order_status)
-  })
-}
-/*  cancel order */
-// consumes get_data from requests.js //
-const getCancelOrder = (otype) => {
-  let key = '?client_name=';
-  if (client_name.value.length > 0) {
-    key += client_name.value; }
-  else { return }
-  if (order_id.value.length > 0) {
-    key = key + '&order_id=' + order_id.value; }
-  else { return }
-  get_data('/order_cancel', key).then(result => {
-      // only change is the below
-      console.log(result)
-  })
-}
+        const exchange = document.getElementById("exchange");
+        exchange.value = keys[2];
+        const token = document.getElementById("token");
+        token.value = keys[13];
+        const order_id = document.getElementById("order_id");
+        order_id.value = keys[1];
+        // key10 is empty
+        // key11 is condition for this loop
+        if (keys[14] == "cancelled") {
+          data = "DONT_DO_ANYTHING";
+        } else if (keys[14] == "complete") {
+          data = "DONT_DO_ANYTHING";
+        } else if (keys[14] == "rejected") {
+          data = "DONT_DO_ANYTHING";
+        }
+        const client_name = document.getElementById("client_name");
+        client_name.value = keys[0];
+        const title = document.getElementById("title");
+        title.innerHTML = symbol.value + " (" + client_name.value + ")";
+        return data;
+      };
 
-const btnCncl = document.getElementsByClassName('btn-cncl')
-for(let i = 0; i < btnCncl.length; i++) {
-  btnCncl[i].addEventListener('click', function() {
-    const data = getRows(this)
-    getCancelOrder(data) 
-  })
-}
-</script> 
-<script src="../static/requests.js"></script>
-{% endif %}
-<!-- end of orders -->
-{% if title=='positions' %}
-  <script src="../static/positions.js"></script>
-{% endif %}
-{% if title == 'new' %}
-  <script src="../static/new.js"></script>
-  <script src="../static/requests.js"></script>
-  <script src="../static/autocomplete.js"></script>
-  <link rel="stylesheet" href="../static/autocomplete.css">
-{%  endif %}
+      /* order modify */
+      //  consumes get_data and buildLtpUrl
+      // requests.js
+      const mdlOrderModify = (status) => {
+        const modal4 = document.getElementById("my-modal-4");
+        if (status == "DONT_DO_ANYTHING") {
+          modal4.click();
+        }
+      };
+
+      const btnMod = document.getElementsByClassName("btn-mod");
+      for (let i = 0; i < btnMod.length; i++) {
+        btnMod[i].addEventListener("click", function () {
+          const order_status = getRows(this);
+          mdlOrderModify(order_status);
+        });
+      }
+      /*  cancel order */
+      // consumes get_data from requests.js //
+      const getCancelOrder = (otype) => {
+        let key = "?client_name=";
+        if (client_name.value.length > 0) {
+          key += client_name.value;
+        } else {
+          return;
+        }
+        if (order_id.value.length > 0) {
+          key = key + "&order_id=" + order_id.value;
+        } else {
+          return;
+        }
+        get_data("/order_cancel", key).then((result) => {
+          // only change is the below
+          console.log(result);
+        });
+      };
+
+      const btnCncl = document.getElementsByClassName("btn-cncl");
+      for (let i = 0; i < btnCncl.length; i++) {
+        btnCncl[i].addEventListener("click", function () {
+          const data = getRows(this);
+          getCancelOrder(data);
+        });
+      }
+    </script>
+    <script src="../static/requests.js"></script>
+    {% endif %}
+    <!-- end of orders -->
+    {% if title=='positions' %}
+    <script src="../static/positions.js"></script>
+    {% endif %} {% if title == 'new' %}
+    <script src="../static/new.js"></script>
+    <script src="../static/requests.js"></script>
+    <script src="../static/autocomplete.js"></script>
+    <link rel="stylesheet" href="../static/autocomplete.css" />
+    {% endif %}
   </body>
 </html>
-
-
