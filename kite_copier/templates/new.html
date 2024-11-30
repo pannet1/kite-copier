@@ -25,19 +25,14 @@
   <div class="form-control relative inline-block">
     <label class="label">
       <span class="label-text">Price</span>
-      <span class="label-text">Trigger Price</span>
+      <span class="label-text">Trigger</span>
+      <span class="label-text">Quantity</span>
     </label>
-    <input type="number" id="price" name="price" class="input input-sm input-bordered caret-blue-500 required" min="0" value="0" step="0.05" style="width:49%"/>
-    <input type="number" id="trigger" name="trigger" class="input input-sm input-bordered float-right"  min="0" value="0" step="0.05" style="width:49%"/>
+    <input type="number" id="price" name="price" class="input input-sm input-bordered caret-blue-500 required" min="0" value="0" step="0.05" style="width:25%"/>
+    <input type="number" id="trigger" name="trigger" class="input input-sm input-bordered required"  min="0" value="0" step="0.05" style="width:25%"/>
+    <input type="number" id="lotsize" name="trigger" class="input input-sm input-bordered float-right" min="0" value="0" style="width:25%"/>
+    <!-- span id="lotsize" name="lotsize" class="label-text-alt"></span-->
   </div>
-
-  <div class="form-control">
-    <label class="label"> 
-    <span class="label-text-alt">Lot size:</span>
-    <span id="lotsize" name="lotsize" class="label-text-alt"></span>
-    </label>
-  </div>
-    <!-- input type="number" id="lotsize" name="trigger" class="input input-sm input-bordered float-right" min="0" value="0"/ -->
 
   <div class="form-control">
     <label class="label cursor-pointer">
@@ -58,7 +53,8 @@
           <label class="label">
             <span class="label px-3">{{ dct.userid }}</span>&nbsp
             <input name="userid" type="text" value="{{dct.userid}}" hidden/>
-            <input name="qty" type="number" class="input input-primary input-md input-bordered" min="0" value="0"/>
+            <input name="multiplier" type="text" value="{{dct.multiplier}}" hidden/>
+            <input name="qty" type="number" class="input input-primary input-sm input-bordered" min="1" value="0"/>
           </label>
         </td>
     </tr>

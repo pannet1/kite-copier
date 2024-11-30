@@ -105,7 +105,8 @@ async def new(request: Request):
     }
     ctx["body"] = []
     for _, user in objs_usr.items():
-        ctx["body"].append({"userid": user._userid})
+        ctx["body"].append({"userid": user._userid, "multiplier": user._multiplier})
+        print(ctx)
     return jt.TemplateResponse("new.html", ctx)
 
 

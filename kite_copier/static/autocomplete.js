@@ -7,6 +7,26 @@ const trigger = document.getElementById('trigger');
 const lotsize = document.getElementById('lotsize');
 const ac_input = document.getElementById("symbol");
 
+
+// General function to update quantities based on the current lot size and multipliers.
+function updateQuantities() {
+  const lotSize = parseInt(lotsize.value) || 0;
+
+  document.querySelectorAll('tr').forEach(row => {
+    const qtyInput = row.querySelector('input[name="qty"]');
+    const multiplierInput = row.querySelector('input[name="multiplier"]');
+    
+    if (qtyInput && multiplierInput) {
+      const multiplier = parseInt(multiplierInput.value) || 1;
+      qtyInput.value = (lotSize * multiplier); // Update qty based on lotSize * multiplier
+    }
+  });
+}
+
+// Attach an event listener to update quantities when `lotsize` is manually changed.
+lotsize.addEventListener('input', updateQuantities);
+
+
 /*******************************************
 
 // main autocomplete function
@@ -37,6 +57,10 @@ const autocomplete = (inp) => {
         lotsize.value = data.lot
         // Symbol
         inp.value = data.symbol
+
+
+        // Call updateQuantities here after setting lotsize from autocomplete
+        updateQuantities();
         // Close the list.
         closeAllLists();
       } else {
