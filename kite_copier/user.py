@@ -98,11 +98,21 @@ class User(object):
         else:
             data: list = self._broker.kite.orders()
 
-        if not status: pass
+        if not status:
+            pass
         elif status.lower() == "open":
-            data = [order for order in data if order and order.get("status") not in ("COMPLETE", "CANCELED", "REJECTED")]
+            data = [
+                order
+                for order in data
+                if order
+                and order.get("status") not in ("COMPLETE", "CANCELED", "REJECTED")
+            ]
         elif status.lower() == "close":
-            data = [order for order in data if order and order.get("status") in ("COMPLETE", "CANCELED", "REJECTED")]
+            data = [
+                order
+                for order in data
+                if order and order.get("status") in ("COMPLETE", "CANCELED", "REJECTED")
+            ]
         return self.__clean_data(data)
 
     @custom_exception_handler
@@ -159,7 +169,6 @@ def load_all_users(
             )
             exit(1)
         user["sec_dir"] = data_dir
-        user["tokpath"] = f"{data_dir}{user['userid']}.txt"
         u = User(**user)
         if not u._disabled:
             lst.append(["I" + str(row), u._enctoken])

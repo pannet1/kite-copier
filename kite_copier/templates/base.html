@@ -19,7 +19,7 @@
             {% for v in pages %}
             <li>
               <a
-                {% if v=="title" %}
+                {% if v=="title"%}
                 class="active"
                 {%
                 endif
@@ -161,8 +161,7 @@
     <!-- end of orders -->
     {% if title=='positions' %}
     <script src="../static/positions.js"></script>
-    {% endif %} 
-    {% if title == 'new' %}
+    {% endif %} {% if title == 'new' %}
     <script src="../static/new.js"></script>
     <script src="../static/requests.js"></script>
     <script src="../static/autocomplete.js"></script>
