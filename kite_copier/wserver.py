@@ -1,24 +1,15 @@
 from constants import logging
-from typing import List, Dict
-
-
-def filter_ws_keys(incoming: List[Dict]) -> List[Dict]:
-    keys = ["instrument_token", "last_price", "ohlc"]
-    new_lst = []
-    if incoming and isinstance(incoming, list) and any(incoming):
-        for dct in incoming:
-            new_dct = {}
-            for key in keys:
-                if dct.get(key, None):
-                    new_dct[key] = dct[key]
-            new_lst.append(new_dct)
-    return new_lst
 
 
 class Wserver:
-    def __init__(self, kite, tokens):
-        self.ticks = []
-        self.tokens = tokens
+
+    def list_to_dict(self, ticks):
+        for dct in ticks:
+            self.ltp[dct["instrument_token"]] = dct["last_price"]
+
+    def __init__(self, kite):
+        self.ltp = {}
+        self.new_token = None
         self.kws = kite.kws()
         self.kws.on_ticks = self.on_ticks
         self.kws.on_connect = self.on_connect
@@ -32,36 +23,35 @@ class Wserver:
         self.kws.connect(threaded=True)
 
     def on_ticks(self, ws, ticks):
-        logging.debug("on tick event called")
-        self.ticks = filter_ws_keys(ticks)
+        if self.new_token:
+            ws.subscribe([self.new_token])
+            ws.set_mode(ws.MODE_LTP, [self.new_token])
+        self.list_to_dict(ticks)
 
     def on_connect(self, ws, response):
-        if response:
-            logging.debug(f"on connect: {response}")
-        # Subscribe to a list of instrument_tokens (Index first).
         # self.tokens = [v for k, v in nse_symbols.items() if k == "instrument_token"]
-        if any(self.tokens):
-            ws.subscribe(self.tokens)
+        instrument_token = [738561, 5633]
+        ws.subscribe(instrument_token)
         # Set RELIANCE to tick in `full` mode.
-        ws.set_mode(ws.MODE_QUOTE, self.tokens)
+        ws.set_mode(ws.MODE_LTP, instrument_token)
+        logging.debug(f"on connect: {response}")
 
     def on_close(self, ws, code, reason):
         # On connection close stop the main loop
         # Reconnection will not happen after executing `ws.stop()`
-        logging.info("ws closed with code {}: {}".format(code, reason))
-        ws.stop()
+        logging.warning("ws closed with code {}: {}".format(code, reason))
+        # ws.stop()
 
     def on_error(self, ws, code, reason):
         # Callback when connection closed with error.
-        logging.info(
+        logging.error(
             "Connection error: {code} - {reason}".format(code=code, reason=reason)
         )
 
     def on_reconnect(self, ws, attempts_count):
         # Callback when reconnect is on progress
-        logging.info("Reconnecting: {}".format(attempts_count))
+        logging.warning("Reconnecting: {}".format(attempts_count))
 
     # Callback when all reconnect failed (exhausted max retries)
-
     def on_noreconnect(self, ws):
-        logging.info("Reconnect failed.")
+        logging.error("Reconnect failed.")

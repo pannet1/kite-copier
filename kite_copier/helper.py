@@ -1,11 +1,22 @@
 from traceback import print_exc
 import pickle
 from constants import logging, S_DATA
+from pprint import pprint
 
 
 class Helper:
 
-    def __init__(self, userid: str):
-        pklfile = f"{S_DATA}{userid}.pkl"
-        with open(pklfile, "rb") as pkl:
-            self._api = pickle.load(pkl)
+    @classmethod
+    def api(cls, api):
+        cls._api = api
+        return cls._api
+
+    @classmethod
+    def trades(cls):
+        lst = cls._api.trades
+        return lst
+
+    @classmethod
+    def orders(cls):
+        lst = cls._api.orders
+        return lst

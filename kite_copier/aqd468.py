@@ -12,11 +12,11 @@ import pickle
 class Manager:
 
     completed_trades = []
+    subscribed = {}
 
     @classmethod
     def startup(cls, api):
-        cls.subscribed = {"NIFTY 50": 10000}
-        cls.ws = Wserver(api, cls.subscribed)
+        cls._ws = Wserver(api)
 
     @classmethod
     def _subscribe_till_ltp(cls, ws_key):
@@ -24,7 +24,7 @@ class Manager:
             quotes = cls._ws.ltp
             ltp = quotes.get(ws_key, None)
             while ltp is None:
-                cls._ws.api.subscribe([ws_key], feed_type="d")
+                cls._ws.new_token = ws_key
                 quotes = cls._ws.ltp
                 ltp = quotes.get(ws_key, None)
                 timer(0.25)
@@ -35,14 +35,13 @@ class Manager:
             cls._subscribe_till_ltp(ws_key)
 
     @classmethod
-    def symbol_info(cls, exchange, symbol, token):
+    def symbol_info(cls, symbol, token):
         try:
             if cls.subscribed.get(symbol, None) is None:
-                key = exchange + "|" + str(token)
                 cls.subscribed[symbol] = {
-                    "key": key,
+                    "key": token,
                     # "low": 0,
-                    "ltp": cls._subscribe_till_ltp(key),
+                    "ltp": cls._subscribe_till_ltp(token),
                 }
             if cls.subscribed.get(symbol, None) is not None:
                 if cls.subscribed[symbol]["ltp"] is None:
@@ -85,19 +84,19 @@ class Jsondb:
     def filter_orders(cls, trades_from_api, completed_trades):
         try:
             new = []
+            ids = []
             order_from_file = O_FUTL.json_fm_file(cls.F_ORDERS)
+
             if order_from_file and any(order_from_file):
                 ids = [order["_id"] for order in order_from_file]
-                logging.debug(ids)
+
             if trades_from_api and any(trades_from_api):
-                """convert list to dict with order id as key"""
                 new = [
-                    {"id": order["order_id"], "buy_order": order}
+                    {"id": order["order_id"], "entry": order}
                     for order in trades_from_api
-                    if order["side"] == "B"
-                    and order["order_id"] not in ids
+                    if order["order_id"] not in ids
                     and order["order_id"] not in completed_trades
-                    and pdlm.parse(order["broker_timestamp"]) > cls.now
+                    # and pdlm.parse(order["broker_timestamp"]) > cls.now
                 ]
         except Exception as e:
             logging.error(f"{e} while get one order")
@@ -126,14 +125,11 @@ def create_strategy(list_of_orders):
         if any(list_of_orders):
             order_item = list_of_orders[0]
             if any(order_item):
-                b = order_item["buy_order"]
-                token = Helper.api.instrument_symbol(b["exchange"], b["symbol"])
-                info = Manager.symbol_info(b["exchange"], b["symbol"], token)
+                b = order_item["entry"]
+                info = Manager.symbol_info(b["symbol"], b["instrument_token"])
                 if info:
                     logging.info(f"CREATE new strategy {order_item['id']}")
-                    strgy = Strategy(
-                        {}, order_item["id"], order_item["buy_order"], info
-                    )
+                    strgy = Strategy({}, order_item["id"], order_item["entry"], info)
         return strgy
     except Exception as e:
         logging.error(f"{e} while creating strategy")
@@ -143,27 +139,32 @@ def create_strategy(list_of_orders):
 def init():
     logging.info("HAPPY TRADING")
     # find the current file name
-    filename = __import__("os").path.basename(__file__).split(".")[0]
-    fullpath = f"{S_DATA}{filename}.pkl"
-    with open(fullpath, "rb") as pkl:
+    filename = __import__("os").path.basename(__file__).split(".")[0].upper()
+    picklepath = f"{S_DATA}{filename}.pkl"
+    dbpath = f"{S_DATA}{filename}/orders.json"
+    if not O_FUTL.is_file_not_2day(dbpath):
+        print(f"creating folder {dbpath}")
+
+    with open(picklepath, "rb") as pkl:
         api = pickle.load(pkl)
         Helper.api(api)
-        Manager.startup()
-        Jsondb.startup()
+        Manager.startup(api.kite)
+        Jsondb.startup(dbpath)
 
 
 def main():
     try:
+        init()
         while not is_time_past("23:59"):
             list_of_attribs: list = O_FUTL.json_fm_file(Jsondb.F_ORDERS)
             strategies = strategies_from_file(list_of_attribs)
             trades_from_api = Helper.trades()
+            # TODO
             completed_trades = Manager.completed_trades
             list_of_orders = Jsondb.filter_orders(trades_from_api, completed_trades)
             strgy = create_strategy(list_of_orders)
             if strgy:
                 strategies.append(strgy)  # add to list of strgy
-
             write_job = []
             for strgy in strategies:
                 ltps = Manager.get_quotes()
@@ -180,7 +181,7 @@ def main():
 
             if any(write_job):
                 O_FUTL.write_file(Jsondb.F_ORDERS, write_job)
-            timer(1)
+            timer(5)
         else:
             kill_tmux()
     except KeyboardInterrupt:
@@ -190,4 +191,4 @@ def main():
         logging.error(f"{e} while init")
 
 
-init()
+main()

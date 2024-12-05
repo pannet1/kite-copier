@@ -4,18 +4,18 @@ from traceback import print_exc
 
 
 class Strategy:
-    def __init__(self, attribs: dict, id: str, buy_order: dict, symbol_info: dict):
+    def __init__(self, attribs: dict, id: str, entry_order: dict, symbol_info: dict):
         if any(attribs):
             self.__dict__.update(attribs)
         else:
             self._id = id
-            self._buy_order = buy_order
-            self._symbol = buy_order["symbol"]
-            self._fill_price = float(buy_order["fill_price"])
-            self._low = float(symbol_info["low"])
+            self._entry_order = entry_order
+            self._symbol = entry_order["symbol"]
+            self._fill_price = float(entry_order["average_price"])
+            self._low = None
             self._ltp = float(symbol_info["ltp"])
-            self._target = O_SETG["trade"]["target"]
-            self._stop = float(symbol_info["low"])
+            self._target = 2
+            self._stop = None
             self._sell_order = ""
             self._orders = []
             self._fn = "set_target"
@@ -23,14 +23,11 @@ class Strategy:
     def set_target(self):
         try:
             target_buffer = self._target * self._fill_price / 100
-            target_virtual = self._fill_price + target_buffer
-            if self._fill_price < self._low:
-                self._target = min(target_virtual, self._low)
-                self._stop = 0.00
-            else:
-                self._target = target_virtual
+            self._target = self._fill_price + target_buffer
+            self._stop = self._fill_price - (target_buffer * 2)
 
             self._target = round(self._target / 0.05) * 0.05
+            self._stop = round(self._stop / 0.05) * 0.05
             self._fn = "place_sell_order"
         except Exception as e:
             print_exc()
@@ -50,20 +47,20 @@ class Strategy:
         try:
             sargs = dict(
                 symbol=self._symbol,
-                quantity=abs(int(self._buy_order["quantity"])),
-                product=self._buy_order["product"],
+                quantity=abs(int(self._entry_order["quantity"])),
+                product=self._entry_order["product"],
                 side="S",
                 price=self._target,
                 trigger_price=0,
                 order_type="LMT",
-                exchange=self._buy_order["exchange"],
+                exchange=self._entry_order["exchange"],
                 tag="exit",
             )
             logging.debug(sargs)
             self._sell_order = Helper.one_side(sargs)
             if self._sell_order is None:
                 raise RuntimeError(
-                    f"unable to get order number for {self._buy_order}. please manage"
+                    f"unable to get order number for {self._entry_order}. please manage"
                 )
             else:
                 self._fn = "exit_order"
@@ -82,8 +79,8 @@ class Strategy:
                 args = dict(
                     symbol=self._symbol,
                     order_id=self._sell_order,
-                    exchange=self._buy_order["exchange"],
-                    quantity=abs(int(self._buy_order["quantity"])),
+                    exchange=self._entry_order["exchange"],
+                    quantity=abs(int(self._entry_order["quantity"])),
                     price_type="MARKET",
                     price=0.00,
                 )
