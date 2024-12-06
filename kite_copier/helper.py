@@ -20,3 +20,7 @@ class Helper:
     def orders(cls):
         lst = cls._api.orders
         return lst
+
+    @classmethod
+    def place_order(cls, kwargs):
+        return cls._api.order_place(kwargs)
