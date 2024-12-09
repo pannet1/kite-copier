@@ -4,80 +4,43 @@ from traceback import print_exc
 
 
 class Jsondb:
-    completed_trades = []
-    trades_from_api = []
-    subscribed = {}
     now = pdlm.now("Asia/Kolkata")
 
     @classmethod
-    def startup(cls, F_ORDERS):
+    def setup_db(cls, F_ORDERS):
         try:
             cls.F_ORDERS = F_ORDERS
-            if O_FUTL.is_file_not_2day(cls.F_ORDERS):
-                # return empty list if file is not modified today
-                O_FUTL.write_file(filepath=cls.F_ORDERS, content=[])
-            else:
-                O_FUTL.write_file(filepath=cls.F_ORDERS, content=[])
+            cls.write([])
 
         except Exception as e:
-            logging.error(f"{e} while startup")
+            logging.error(f"{e} while setup_db")
             print_exc()
 
     @classmethod
-    def _subscribe_till_ltp(cls, ws_key):
-        try:
-            quotes = cls.ws.ltp
-            ltp = quotes.get(ws_key, None)
-            while ltp is None:
-                cls.ws.api.subscribe([ws_key], feed_type="d")
-                quotes = cls.ws.ltp
-                ltp = quotes.get(ws_key, None)
-                timer(0.25)
-            return ltp
-        except Exception as e:
-            logging.error(f"{e} while get ltp")
-            print_exc()
+    def write(cls, content):
+        O_FUTL.write_file(filepath=cls.F_ORDERS, content=content)
 
     @classmethod
-    def symbol_info(cls, exchange, symbol):
-        try:
-            if cls.subscribed.get(symbol, None) is None:
-                token = Helper.api.instrument_symbol(exchange, symbol)
-                now = pdlm.now()
-                fm = now.replace(hour=9, minute=0, second=0, microsecond=0).timestamp()
-                to = now.replace(hour=9, minute=17, second=0, microsecond=0).timestamp()
-                resp = Helper.api.historical(exchange, token, fm, to)
-                key = exchange + "|" + str(token)
-                cls.subscribed[symbol] = {
-                    "key": key,
-                    # "low": 0,
-                    "low": resp[-2]["intl"],
-                    "ltp": cls._subscribe_till_ltp(key),
-                }
-            if cls.subscribed.get(symbol, None) is not None:
-                if cls.subscribed[symbol]["ltp"] is None:
-                    raise ValueError("Ltp cannot be None")
-                return cls.subscribed[symbol]
-        except Exception as e:
-            logging.error(f"{e} while symbol info")
-            print_exc()
+    def read(cls):
+        return O_FUTL.json_fm_file(cls.F_ORDERS)
 
     @classmethod
-    def get_one(cls):
+    def filter_orders(cls, trades_from_api, completed_trades):
         try:
             new = []
+            ids = []
             order_from_file = O_FUTL.json_fm_file(cls.F_ORDERS)
-            ids = read_buy_order_ids(order_from_file)
-            cls.trades_from_api = Helper.trades()
-            if cls.trades_from_api and any(cls.trades_from_api):
-                """convert list to dict with order id as key"""
+
+            if order_from_file and any(order_from_file):
+                ids = [order["_id"] for order in order_from_file]
+
+            if trades_from_api and any(trades_from_api):
                 new = [
-                    {"id": order["order_id"], "buy_order": order}
-                    for order in cls.trades_from_api
-                    if order["side"] == "B"
-                    and order["order_id"] not in ids
-                    and order["order_id"] not in cls.completed_trades.copy()
-                    and pdlm.parse(order["broker_timestamp"]) > cls.now
+                    {"id": order["order_id"], "entry": order}
+                    for order in trades_from_api
+                    if order["order_id"] not in ids
+                    and order["order_id"] not in completed_trades
+                    # and pdlm.parse(order["broker_timestamp"]) > cls.now
                 ]
         except Exception as e:
             logging.error(f"{e} while get one order")

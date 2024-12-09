@@ -1,10 +1,23 @@
-from constants import logging, O_SETG
+from constants import logging
 from helper import Helper
 from traceback import print_exc
 import numpy as np
 
 
 class Strategy:
+    def is_order_completed(self):
+        try:
+            Flag = False
+            for order in self._orders:
+                if self._sell_order == order["order_id"]:
+                    logging.info(f"{self._symbol} order {self._sell_order} is complete")
+                    Flag = True
+        except Exception as e:
+            logging.error(f"{e} get order from book")
+            print_exc()
+        finally:
+            return Flag
+
     def __init__(self, attribs: dict, id: str, buy_order: dict, ltp: float):
         if any(attribs):
             self.__dict__.update(attribs)
@@ -38,57 +51,18 @@ class Strategy:
                     ),
                 )
             )
-            self._stop_price = self._bands[0]
-            self._fn = "place_initial_stop"
-            print(self._bands)
-        except Exception as e:
-            print_exc()
-            print(f"{e} while set target")
-
-    def update(self):
-        try:
-            if self.is_order_completed():
-                logging.info("trail stopped")
-                return self._id
-
-            # LTP moved to a higher band
-            if self._ltp > self._bands[-1]:
-                # Target reached, modify stop to exit at market order
-                # TODO modify stop to target
-                print(f"LTP {self._ltp} reached final target{self._bands[-1]}")
-                return self._id
 
             if not isinstance(self._bands, np.ndarray) or self._bands.ndim != 1:
                 raise ValueError("self._bands must be a 1D numpy array.")
             if not np.isscalar(self._ltp):
                 raise ValueError("self._ltp must be a scalar value.")
 
-            # Find the new band index for the current LTP
-            new_target = np.searchsorted(self._bands, self._ltp, side="right") - 1
-
-            if new_target > self._current_target:
-                if self._current_target == 0:
-                    self._stop_price = self._fill_price
-                else:
-                    self._stop_price = self._bands[self._current_target]
-
-                self._current_target = new_target
-                print(
-                    f"LTP {self._ltp}: is above Target {new_target}. New stop: {self._stop_price}"
-                )
-            elif new_target < self._current_target:
-                # LTP moved to a lower band (optional warning)
-                print(
-                    f"LTP {self._ltp}: Dropped below Target {new_target}. Current stop remains: {self._stop_price}"
-                )
-            else:
-                # LTP moved to a lower band (optional warning)
-                print(f"LTP {self._ltp}: Stop remains unchanged")
-
-            return "hold"
+            self._stop_price = self._bands[0]
+            self._fn = "place_initial_stop"
+            print(self._bands)
         except Exception as e:
-            logging.error(f"{e} in update")
             print_exc()
+            print(f"{e} while set target")
 
     def place_initial_stop(self):
         try:
@@ -110,29 +84,71 @@ class Strategy:
                     f"unable to get order number for {self._buy_order}. please manage"
                 )
             else:
-                self._fn = "exit_order"
+                self._fn = "update"
         except Exception as e:
             logging.error(f"{e} whle place sell order")
             print_exc()
 
-    def is_order_completed(self):
+    def _is_exit_conditions(self):
         try:
-            for order in self._orders:
-                if self._sell_order == order["order_id"]:
-                    logging.info(f"{self._symbol} order {self._sell_order} is complete")
-                    return True
+            Flag = False
+            if self._ltp < self._stop_price:
+                logging.info(
+                    f"Trail stopped {self._ltp} is less than {self._stop_price}"
+                )
+                Flag = True
+            elif self._ltp > self._bands[-1]:
+                # LTP moved to a highest band
+                logging.info(f"LTP {self._ltp} reached final target{self._bands[-1]}")
+                Flag = True
         except Exception as e:
-            logging.error(f"{e} get order from book")
+            logging.error(f"{e} while check stop loss")
+            print_exc()
+        finally:
+            return Flag
+
+    def update(self):
+        try:
+            if self.is_order_completed():
+                logging.info("initial stop loss hit")
+                return self._id
+
+            if self._is_exit_conditions():
+                self.exit_order()
+                return self._id
+
+            # Find the new target index for the current LTP
+            new_target = np.searchsorted(self._bands, self._ltp, side="right") - 1
+            if new_target > self._current_target:
+                if self._current_target == 0:
+                    self._stop_price = self._fill_price
+                else:
+                    self._stop_price = self._bands[self._current_target]
+
+                self._current_target = new_target
+                logging.info(
+                    f"LTP {self._ltp}: is above Target {new_target}. New stop trailing: {self._stop_price}"
+                )
+            elif new_target < self._current_target:
+                # LTP moved to a lower band (optional warning)
+                logging.debug(
+                    f"LTP {self._ltp}: Dropped below Target {new_target}. Current stop remains: {self._stop_price}"
+                )
+            else:  # no change
+                logging.debug(f"LTP {self._ltp}: Stop remains unchanged")
+
+        except Exception as e:
+            logging.error(f"{e} in update")
             print_exc()
 
     def exit_order(self):
         try:
             args = dict(
-                symbol=self._symbol,
+                variety="regular",
                 order_id=self._sell_order,
-                exchange=self._buy_order["exchange"],
                 quantity=abs(int(self._buy_order["quantity"])),
-                price_type="MARKET",
+                order_type="MARKET",
+                trigger_price=0.0,
                 price=0.00,
             )
             resp = Helper.modify_order(args)
