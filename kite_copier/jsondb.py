@@ -34,7 +34,6 @@ class Jsondb:
             if order_from_file and any(order_from_file):
                 ids = [order["_id"] for order in order_from_file]
             if trades_from_api and any(trades_from_api):
-                print(trades_from_api)
                 new = [
                     {"id": order["order_id"], "entry": order}
                     for order in trades_from_api
