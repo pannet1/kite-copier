@@ -55,11 +55,6 @@ class Strategy:
                     ),
                 )
             )
-            """
-            self._bands = [
-                float(b) for b in self._bands
-            ]  # Ensure all values are floats
-            """
 
             if not isinstance(self._bands, np.ndarray) or self._bands.ndim != 1:
                 raise ValueError("self._bands must be a 1D numpy array.")
