@@ -1,4 +1,4 @@
-from constants import logging
+from constants import O_SETG, logging
 from helper import Helper
 from traceback import print_exc
 import numpy as np
@@ -28,15 +28,14 @@ class Strategy:
             self._current_target = int(self._current_target)
         else:
             # settings
-            threshold = 5  # percentage
-            targets = 6  # total targets for example T6
+            threshold = O_SETG["trade"]["threshold"]
             self._id = id
             self._buy_order = buy_order
             self._symbol = buy_order["symbol"]
             self._fill_price = buy_order["average_price"]
             self._ltp = ltp
             self._threshold = threshold * self._fill_price / 100
-            self._targets = targets
+            self._targets = O_SETG["trade"]["targets"]
             self._current_target = 0
             self._sell_order = ""
             self._orders = []

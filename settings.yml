@@ -7,3 +7,5 @@ program:
 trade:
   start: "9:30"
   stop: "15:00"
+  threshold: 5
+  targets: 6
