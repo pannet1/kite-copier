@@ -12,6 +12,7 @@ class Strategy:
                 if self._sell_order == order["order_id"]:
                     logging.info(f"{self._symbol} order {self._sell_order} is complete")
                     Flag = True
+                    break
         except Exception as e:
             logging.error(f"{e} get order from book")
             print_exc()
@@ -21,6 +22,10 @@ class Strategy:
     def __init__(self, attribs: dict, id: str, buy_order: dict, ltp: float):
         if any(attribs):
             self.__dict__.update(attribs)
+            if isinstance(self._bands, str) and len(self._bands) > 2:
+                values = self._bands.strip("[]").split()
+                self._bands = np.array([float(value) for value in values])
+            self._current_target = int(self._current_target)
         else:
             # settings
             threshold = 5  # percentage
@@ -51,11 +56,18 @@ class Strategy:
                     ),
                 )
             )
+            """
+            self._bands = [
+                float(b) for b in self._bands
+            ]  # Ensure all values are floats
+            """
 
             if not isinstance(self._bands, np.ndarray) or self._bands.ndim != 1:
                 raise ValueError("self._bands must be a 1D numpy array.")
             if not np.isscalar(self._ltp):
                 raise ValueError("self._ltp must be a scalar value.")
+
+            self._bands = [round(b * 20) / 20 for b in self._bands]
 
             self._stop_price = self._bands[0]
             self._fn = "place_initial_stop"
@@ -70,10 +82,10 @@ class Strategy:
                 symbol=self._symbol,
                 quantity=abs(int(self._buy_order["quantity"])),
                 product=self._buy_order["product"],
-                side="S",
-                price=0,
-                trigger_price=0,
-                order_type="SLM",
+                side="SELL",
+                price=self._stop_price - 1,
+                trigger_price=self._stop_price,
+                order_type="SL",
                 exchange=self._buy_order["exchange"],
                 tag="exit",
             )
@@ -164,7 +176,9 @@ class Strategy:
             ltp = ltps.get(self._symbol, None)
             if ltp is not None:
                 self._ltp = float(ltp)
-            getattr(self, self._fn)()
+            buy_id = getattr(self, self._fn)()
+            if buy_id is not None:
+                return buy_id
         except Exception as e:
             logging.error(f"{e} in run for buy order {self._id}")
             print_exc()

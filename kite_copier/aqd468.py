@@ -46,7 +46,7 @@ def _init():
     picklepath = f"{S_DATA}{filename}.pkl"
     dbpath = f"{S_DATA}{filename}/orders.json"
     if not O_FUTL.is_file_not_2day(dbpath):
-        print(f"creating folder {dbpath}")
+        print(f"creating folder {dbpath} if not exists")
 
     with open(picklepath, "rb") as pkl:
         api = pickle.load(pkl)

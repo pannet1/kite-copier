@@ -16,7 +16,6 @@ class Helper:
         try:
             cls._api = api
             cls._ws = Wserver(api.kite)
-            print(api.kite.profile())
         except Exception as e:
             logging.error(f"api {e}")
 
