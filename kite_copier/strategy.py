@@ -77,7 +77,7 @@ class Strategy:
                 quantity=abs(int(self._buy_order["quantity"])),
                 product=self._buy_order["product"],
                 side="SELL",
-                price=self._stop_price - 1,
+                price=self._stop_price - 10,
                 trigger_price=self._stop_price,
                 order_type="SL",
                 exchange=self._buy_order["exchange"],
