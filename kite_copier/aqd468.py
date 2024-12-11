@@ -21,12 +21,12 @@ def strategies_from_file(list_of_attribs):
         print_exc()
 
 
-def create_strategy(list_of_orders):
+def create_strategy(list_of_trades):
     try:
         strgy = None
         info = None
-        if any(list_of_orders):
-            order_item = list_of_orders[0]
+        if any(list_of_trades):
+            order_item = list_of_trades[0]
             if any(order_item):
                 b = order_item["entry"]
                 info = Helper.symbol_info(b["symbol"], b["instrument_token"])
@@ -44,7 +44,7 @@ def _init():
     # find the current file name
     filename = __import__("os").path.basename(__file__).split(".")[0].upper()
     picklepath = f"{S_DATA}{filename}.pkl"
-    dbpath = f"{S_DATA}{filename}/orders.json"
+    dbpath = f"{S_DATA}{filename}/trades.json"
     if not O_FUTL.is_file_not_2day(dbpath):
         print(f"creating folder {dbpath} if not exists")
 
@@ -62,10 +62,10 @@ def main():
             strategies = strategies_from_file(list_of_attribs)
             trades_from_api = Helper.trades()
             # TODO
-            list_of_orders = Jsondb.filter_orders(
+            list_of_trades = Jsondb.filter_orders(
                 trades_from_api, Helper.completed_trades
             )
-            strgy = create_strategy(list_of_orders)
+            strgy = create_strategy(list_of_trades)
             if strgy:
                 strategies.append(strgy)  # add to list of strgy
             run_strategies(strategies, trades_from_api)

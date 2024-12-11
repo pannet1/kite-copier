@@ -72,14 +72,19 @@ class Strategy:
 
     def place_initial_stop(self):
         try:
+            """
+            price=self._stop_price - 10,
+            trigger_price=self._stop_price,
+            order_type="SL",
+            """
             sargs = dict(
                 symbol=self._symbol,
                 quantity=abs(int(self._buy_order["quantity"])),
                 product=self._buy_order["product"],
                 side="SELL",
-                price=self._stop_price - 10,
+                price=0,
                 trigger_price=self._stop_price,
-                order_type="SL",
+                order_type="SL-M",
                 exchange=self._buy_order["exchange"],
                 tag="exit",
             )

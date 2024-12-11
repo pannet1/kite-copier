@@ -78,6 +78,11 @@ class Helper:
         return lst
 
     @classmethod
+    def positions(cls):
+        lst = cls._api.positions
+        return lst
+
+    @classmethod
     def place_order(cls, kwargs):
         return cls._api.order_place(**kwargs)
 
@@ -92,9 +97,19 @@ class Helper:
 
 if __name__ == "__main__":
     import pickle
+    import pandas as pd
+    from constants import S_DATA
+    from pprint import pprint
 
     with open("../data/AQD468.pkl", "rb") as pkl:
         obj = pickle.load(pkl)
         Helper.api(obj)
-        resp = Helper.trades()
-        print(resp)
+
+    resp = Helper.trades()
+    pd.DataFrame(resp).to_csv(S_DATA + "trades.csv")
+
+    m2m = 0
+    resp = Helper.positions()
+    for item in resp:
+        m2m += item["m2m"]
+    print(f"{m2m=}")
