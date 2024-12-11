@@ -13,7 +13,7 @@ def strategies_from_file(list_of_attribs):
         strategies = []
         logging.debug("READ strategies from file")
         for attribs in list_of_attribs:
-            strgy = Strategy(attribs, "", {}, {})
+            strgy = Strategy(attribs, "", {}, 0.0)
             strategies.append(strgy)
         return strategies
     except Exception as e:
@@ -61,8 +61,7 @@ def main():
             list_of_attribs: list = Jsondb.read()
             strategies = strategies_from_file(list_of_attribs)
             trades_from_api = Helper.trades()
-            # TODO
-            list_of_trades = Jsondb.filter_orders(
+            list_of_trades = Jsondb.filter_trades(
                 trades_from_api, Helper.completed_trades
             )
             strgy = create_strategy(list_of_trades)

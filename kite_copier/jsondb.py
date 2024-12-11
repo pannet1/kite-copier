@@ -25,7 +25,7 @@ class Jsondb:
         return O_FUTL.json_fm_file(cls.F_ORDERS)
 
     @classmethod
-    def filter_orders(cls, trades_from_api, completed_trades):
+    def filter_trades(cls, trades_from_api, completed_trades):
         try:
             new = []
             ids = []
