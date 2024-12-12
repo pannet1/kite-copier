@@ -72,11 +72,14 @@ class User(object):
             product=product,
             price=price,
             trigger_price=triggerPrice,
-            validity="DAY",
+            disclosed_quantity=0,
+            squareoff=0,
+            stoploss=0,
+            trailing_stoploss=0,
         )
         if self._last_order == order_args:
             print("Penguin sleeping on the iceberg :-)")
-            sleep(3)
+            sleep(1)
         self._last_order = order_args
         self._write_order(order_args, logpath)
         status = self._broker.order_place(**order_args)

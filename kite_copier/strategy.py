@@ -86,7 +86,6 @@ class Strategy:
                 trigger_price=self._stop_price,
                 order_type="SL",
                 exchange=self._buy_order["exchange"],
-                tag="exit",
             )
             logging.debug(sargs)
             self._sell_order = Helper.place_order(sargs)
