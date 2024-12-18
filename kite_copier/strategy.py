@@ -32,7 +32,7 @@ class Strategy:
             self._id = id
             self._buy_order = buy_order
             self._symbol = buy_order["symbol"]
-            self._fill_price = buy_order["average_price"]
+            self._fill_price = buy_order["fill_price"]
             self._ltp = ltp
             self._threshold = threshold * self._fill_price / 100
             self._targets = O_SETG["trade"]["targets"]

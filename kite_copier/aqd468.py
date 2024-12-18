@@ -2,16 +2,16 @@ from constants import O_FUTL, logging, S_DATA
 from helper import Helper
 from strategy import Strategy
 from jsondb import Jsondb
-from toolkit.kokoo import is_time_past, kill_tmux, timer
+from toolkit.kokoo import is_time_past, timer
 from traceback import print_exc
 from pprint import pprint
 import pickle
 
 
-def strategies_from_file(list_of_attribs):
+def strategies_from_file():
     try:
         strategies = []
-        logging.debug("READ strategies from file")
+        list_of_attribs = Jsondb.read()
         for attribs in list_of_attribs:
             strgy = Strategy(attribs, "", {}, 0.0)
             strategies.append(strgy)
@@ -28,11 +28,14 @@ def create_strategy(list_of_trades):
         if any(list_of_trades):
             order_item = list_of_trades[0]
             if any(order_item):
-                b = order_item["entry"]
-                info = Helper.symbol_info(b["symbol"], b["instrument_token"])
+                entry = order_item["entry"]
+                info = Helper.symbol_info(entry["symbol"], entry["instrument_token"])
                 if info:
                     logging.info(f"CREATE new strategy {order_item['id']}")
-                    strgy = Strategy({}, order_item["id"], order_item["entry"], info)
+                    entry["fill_price"] = Helper.find_fillprice_from_order_id(
+                        order_item["id"]
+                    )
+                    strgy = Strategy({}, order_item["id"], entry, info)
         return strgy
     except Exception as e:
         logging.error(f"{e} while creating strategy")
@@ -58,19 +61,18 @@ def main():
     try:
         _init()
         while not is_time_past("23:59"):
-            list_of_attribs: list = Jsondb.read()
-            strategies = strategies_from_file(list_of_attribs)
-            trades_from_api = Helper.trades()
+            strategies = strategies_from_file()
+            trades_from_api = Helper.orders()
             list_of_trades = Jsondb.filter_trades(
                 trades_from_api, Helper.completed_trades
             )
             strgy = create_strategy(list_of_trades)
             if strgy:
                 strategies.append(strgy)  # add to list of strgy
-            run_strategies(strategies, trades_from_api)
+
+            write_job = run_strategies(strategies, trades_from_api)
+            Jsondb.write(write_job)
             timer(1)
-        else:
-            kill_tmux()
     except KeyboardInterrupt:
         __import__("sys").exit()
     except Exception as e:
@@ -92,8 +94,7 @@ def run_strategies(strategies, trades_from_api):
             Helper.completed_trades.append(completed_buy_order_id)
         else:
             write_job.append(obj_dict)
-    if any(write_job):
-        Jsondb.write(write_job)
+    return write_job
 
 
 main()

@@ -1,6 +1,6 @@
 from wserver import Wserver
 from toolkit.kokoo import timer
-from constants import O_FUTL, logging
+from constants import logging
 from traceback import print_exc
 
 
@@ -78,6 +78,16 @@ class Helper:
         return lst
 
     @classmethod
+    def find_fillprice_from_order_id(cls, order_id):
+        lst_of_trades = cls.trades()
+        lst_of_average_prices = [
+            trade["average_price"]
+            for trade in lst_of_trades
+            if trade["order_id"] == order_id
+        ]
+        return sum(lst_of_average_prices) / len(lst_of_average_prices)
+
+    @classmethod
     def positions(cls):
         lst = cls._api.positions
         return lst
@@ -107,6 +117,9 @@ if __name__ == "__main__":
 
     resp = Helper.trades()
     pd.DataFrame(resp).to_csv(S_DATA + "trades.csv")
+
+    resp = Helper.orders()
+    pd.DataFrame(resp).to_csv(S_DATA + "orders.csv")
 
     m2m = 0
     resp = Helper.positions()

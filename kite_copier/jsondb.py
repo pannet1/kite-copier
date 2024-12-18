@@ -35,12 +35,13 @@ class Jsondb:
                 ids = [order["_id"] for order in order_from_file]
             if trades_from_api and any(trades_from_api):
                 new = [
-                    {"id": order["trade_id"], "entry": order}
+                    {"id": order["order_id"], "entry": order}
                     for order in trades_from_api
-                    if order["trade_id"] not in ids
-                    and order["trade_id"] not in completed_trades
+                    if order["order_id"] not in ids
+                    and order["order_id"] not in completed_trades
                     and order["side"] == "BUY"
                     and order["product"] == "MIS"
+                    and order["status"] == "COMPLETE"
                     and pdlm.parse(
                         order["order_timestamp"], strict=False, tz="Asia/Kolkata"
                     )
