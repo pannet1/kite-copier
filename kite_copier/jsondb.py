@@ -34,6 +34,7 @@ class Jsondb:
             if order_from_file and any(order_from_file):
                 ids = [order["_id"] for order in order_from_file]
             if trades_from_api and any(trades_from_api):
+                print(f"first record of tradebook {trades_from_api[0]}")
                 new = [
                     {"id": order["order_id"], "entry": order}
                     for order in trades_from_api
@@ -43,12 +44,14 @@ class Jsondb:
                     and order["product"] == "MIS"
                     and order["status"] == "COMPLETE"
                     and pdlm.parse(
-                        order["order_timestamp"], strict=False, tz="Asia/Kolkata"
+                        order["exchange_update_timestamp"],
+                        strict=False,
+                        tz="Asia/Kolkata",
                     )
                     > cls.now
                 ]
         except Exception as e:
-            logging.error(f"{e} while get one order")
+            logging.error(f"{e} while filter trades")
             print_exc()
         finally:
             return new

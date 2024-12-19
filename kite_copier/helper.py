@@ -109,7 +109,7 @@ if __name__ == "__main__":
     import pickle
     import pandas as pd
     from constants import S_DATA
-    from pprint import pprint
+    from jsondb import Jsondb
 
     with open("../data/AQD468.pkl", "rb") as pkl:
         obj = pickle.load(pkl)
@@ -126,3 +126,7 @@ if __name__ == "__main__":
     for item in resp:
         m2m += item["m2m"]
     print(f"{m2m=}")
+
+    Jsondb.setup_db(S_DATA + "orders.json")
+    new = Jsondb.filter_trades(Helper.orders(), [])
+    print(new)
