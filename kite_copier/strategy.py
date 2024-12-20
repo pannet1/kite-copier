@@ -5,20 +5,6 @@ import numpy as np
 
 
 class Strategy:
-    def is_order_completed(self):
-        try:
-            Flag = False
-            for order in self._orders:
-                if self._sell_order == order["order_id"]:
-                    logging.info(f"{self._symbol} order {self._sell_order} is complete")
-                    Flag = True
-                    break
-        except Exception as e:
-            logging.error(f"{e} get order from book")
-            print_exc()
-        finally:
-            return Flag
-
     def __init__(self, attribs: dict, id: str, buy_order: dict, ltp: float):
         if any(attribs):
             self.__dict__.update(attribs)
@@ -117,9 +103,23 @@ class Strategy:
         finally:
             return Flag
 
+    def _is_order_completed(self):
+        try:
+            Flag = False
+            for order in self._orders:
+                if self._sell_order == order["order_id"]:
+                    logging.info(f"{self._symbol} order {self._sell_order} is complete")
+                    Flag = True
+                    break
+        except Exception as e:
+            logging.error(f"{e} get order from book")
+            print_exc()
+        finally:
+            return Flag
+
     def update(self):
         try:
-            if self.is_order_completed():
+            if self._is_order_completed():
                 logging.info("initial stop loss hit")
                 return self._id
 
@@ -161,6 +161,7 @@ class Strategy:
                 trigger_price=0.0,
                 price=0.00,
             )
+            logging.debug(f"modify order {args}")
             resp = Helper.modify_order(args)
             logging.debug(f"order id: {args['order_id']} {resp}")
             return self._id
@@ -173,10 +174,10 @@ class Strategy:
             self._orders = orders
             ltp = ltps.get(self._symbol, None)
             if ltp is not None:
+                logging.debug(f"LTP for {self._symbol} is {ltp}")
                 self._ltp = float(ltp)
             buy_id = getattr(self, self._fn)()
-            if buy_id is not None:
-                return buy_id
+            return buy_id
         except Exception as e:
             logging.error(f"{e} in run for buy order {self._id}")
             print_exc()

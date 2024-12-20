@@ -1,6 +1,8 @@
 from constants import O_FUTL, logging
 import pendulum as pdlm
 from traceback import print_exc
+from kokoo.toolkit import timer
+import os
 
 
 class Jsondb:
@@ -9,30 +11,50 @@ class Jsondb:
     @classmethod
     def setup_db(cls, F_ORDERS):
         try:
-            cls.F_ORDERS = F_ORDERS
-            cls.write([])
+            if O_FUTL.is_file_not_2day(F_ORDERS):
+                logging.info(f"file{F_ORDERS} not modified today")
 
+            O_FUTL.write_file(filepath=F_ORDERS, content=[])
+            cls.F_ORDERS = F_ORDERS
         except Exception as e:
             logging.error(f"{e} while setup_db")
             print_exc()
 
     @classmethod
-    def write(cls, content):
-        O_FUTL.write_file(filepath=cls.F_ORDERS, content=content)
+    def write(cls, write_job):
+        temp_file = cls.F_ORDERS + ".tmp"  # Marker file for the writer
+
+        # Write to strategies.json only if marker file does not exist
+        with open(temp_file, "w"):  # Create marker file (can be empty)
+            pass  # This ensures the marker is created
+
+        try:
+            O_FUTL.write_file(cls.F_ORDERS, write_job)
+        finally:
+            # Remove the marker file after the write is completed
+            os.remove(temp_file)
+            logging.debug("write completed")
 
     @classmethod
     def read(cls):
-        return O_FUTL.json_fm_file(cls.F_ORDERS)
+        temp_file = cls.F_ORDERS + ".tmp"  # Marker file for synchronization
+
+        # Wait until the marker file is deleted (indicating writer is done)
+        while os.path.exists(temp_file):
+            timer(0.1)  # Wait for a short interval before checking again
+        else:
+            logging.debug("reading file")
+            return O_FUTL.json_fm_file(cls.F_ORDERS)
 
     @classmethod
     def filter_trades(cls, trades_from_api, completed_trades):
         try:
             new = []
             ids = []
-            order_from_file = O_FUTL.json_fm_file(cls.F_ORDERS)
-
+            order_from_file = cls.read()
             if order_from_file and any(order_from_file):
                 ids = [order["_id"] for order in order_from_file]
+
             if trades_from_api and any(trades_from_api):
                 new = [
                     {"id": order["order_id"], "entry": order}

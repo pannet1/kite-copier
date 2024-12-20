@@ -1,7 +1,21 @@
 from wserver import Wserver
-from toolkit.kokoo import timer
+from toolkit.kokoo import timer, blink
 from constants import logging
 from traceback import print_exc
+import pendulum as pdlm
+
+
+# add a decorator to check if wait_till is past
+def is_not_rate_limited(func):
+    # Decorator to enforce a 1-second delay between calls
+    def wrapper(*args, **kwargs):
+        now = pdlm.now()
+        if now < Helper.wait_till:
+            blink()
+        Helper.wait_till = now.add(seconds=1)
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 class Helper:
@@ -16,18 +30,19 @@ class Helper:
         try:
             cls._api = api
             cls._ws = Wserver(api.kite)
+            cls.wait_till = pdlm.now().add(seconds=1)
         except Exception as e:
             logging.error(f"api {e}")
 
     @classmethod
-    def _subscribe_till_ltp(cls, ws_key):
+    def _subscribe_till_ltp(cls, token):
         try:
             quotes = cls._ws.ltp
-            ltp = quotes.get(ws_key, None)
+            ltp = quotes.get(token, None)
             while ltp is None:
-                cls._ws.new_token = ws_key
+                cls._ws.new_token = token
                 quotes = cls._ws.ltp
-                ltp = quotes.get(ws_key, None)
+                ltp = quotes.get(token, None)
                 timer(0.25)
             return ltp
         except Exception as e:
@@ -45,8 +60,8 @@ class Helper:
                     "ltp": cls._subscribe_till_ltp(token),
                 }
             if cls.subscribed.get(symbol, None) is not None:
-                if cls.subscribed[symbol]["ltp"] is None:
-                    raise ValueError("Ltp cannot be None")
+                quotes = cls._ws.ltp
+                cls.subscribed[symbol]["ltp"] = quotes[token]
                 return cls.subscribed[symbol]
         except Exception as e:
             logging.error(f"{e} while symbol info")
@@ -68,14 +83,28 @@ class Helper:
             return quote
 
     @classmethod
+    @is_not_rate_limited
     def trades(cls):
-        lst = cls._api.trades
-        return lst
+        try:
+            lst = []
+            lst = cls._api.trades
+        except Exception as e:
+            logging.error(f"{e} while getting trades")
+            print_exc()
+        finally:
+            return lst
 
     @classmethod
+    @is_not_rate_limited
     def orders(cls):
-        lst = cls._api.orders
-        return lst
+        try:
+            lst = []
+            lst = cls._api.orders
+        except Exception as e:
+            logging.error(f"{e} while getting orders")
+            print_exc()
+        finally:
+            return lst
 
     @classmethod
     def find_fillprice_from_order_id(cls, order_id):
@@ -88,6 +117,7 @@ class Helper:
         return sum(lst_of_average_prices) / len(lst_of_average_prices)
 
     @classmethod
+    @is_not_rate_limited
     def positions(cls):
         lst = cls._api.positions
         return lst
@@ -127,6 +157,8 @@ if __name__ == "__main__":
         m2m += item["m2m"]
     print(f"{m2m=}")
 
+    """
     Jsondb.setup_db(S_DATA + "orders.json")
     new = Jsondb.filter_trades(Helper.orders(), [])
     print(new)
+    """
