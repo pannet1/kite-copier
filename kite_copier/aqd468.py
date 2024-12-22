@@ -103,4 +103,5 @@ def main():
         logging.error(f"{e} while init")
 
 
-main()
+if __name__ == "__main__":
+    main()

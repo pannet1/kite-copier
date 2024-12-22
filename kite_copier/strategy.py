@@ -12,6 +12,7 @@ class Strategy:
                 values = self._bands.strip("[]").split()
                 self._bands = np.array([float(value) for value in values])
             self._current_target = int(self._current_target)
+            self._ltp = float(self._ltp)
         else:
             # settings
             threshold = O_SETG["trade"]["threshold"]
@@ -176,6 +177,8 @@ class Strategy:
             if ltp is not None:
                 logging.debug(f"LTP for {self._symbol} is {ltp}")
                 self._ltp = float(ltp)
+            else:
+                logging.debug(f"ltp is {ltp}")
             buy_id = getattr(self, self._fn)()
             return buy_id
         except Exception as e:

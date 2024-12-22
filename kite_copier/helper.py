@@ -108,13 +108,17 @@ class Helper:
 
     @classmethod
     def find_fillprice_from_order_id(cls, order_id):
-        lst_of_trades = cls.trades()
-        lst_of_average_prices = [
-            trade["average_price"]
-            for trade in lst_of_trades
-            if trade["order_id"] == order_id
-        ]
-        return sum(lst_of_average_prices) / len(lst_of_average_prices)
+        try:
+            lst_of_trades = cls.trades()
+            lst_of_average_prices = [
+                trade["average_price"]
+                for trade in lst_of_trades
+                if trade["order_id"] == order_id
+            ]
+            return sum(lst_of_average_prices) / len(lst_of_average_prices)
+        except Exception as e:
+            print_exc()
+            logging.error(f"{e} while find fill price from order id")
 
     @classmethod
     @is_not_rate_limited

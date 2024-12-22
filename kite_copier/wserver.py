@@ -30,7 +30,7 @@ class Wserver:
 
     def on_connect(self, ws, response):
         # self.tokens = [v for k, v in nse_symbols.items() if k == "instrument_token"]
-        instrument_token = [738561, 5633]
+        instrument_token = [5633]
         ws.subscribe(instrument_token)
         # Set RELIANCE to tick in `full` mode.
         ws.set_mode(ws.MODE_LTP, instrument_token)
@@ -55,3 +55,20 @@ class Wserver:
     # Callback when all reconnect failed (exhausted max retries)
     def on_noreconnect(self, ws):
         logging.error("Reconnect failed.")
+
+
+if __name__ == "__main__":
+    from constants import S_DATA
+    import pickle
+    from toolkit.kokoo import timer
+
+    picklepath = f"{S_DATA}/AQD468.pkl"
+    with open(picklepath, "rb") as pkl:
+        api = pickle.load(pkl)
+        ws = Wserver(api.kite)
+
+    while not any(ws.ltp):
+        timer(1)
+        print("waiting")
+    else:
+        print(ws.ltp)
