@@ -98,8 +98,23 @@ class Helper:
     @is_not_rate_limited
     def orders(cls):
         try:
+            trade_keys = [
+                "average_price",
+                "exchange",
+                "exchange_update_timestamp",
+                "instrument_token",
+                "order_id",
+                "order_type",
+                "price",
+                "product",
+                "quantity",
+                "side",
+                "status",
+            ]
             lst = []
             lst = cls._api.orders
+            if any(lst):
+                lst = [{k: dct.get(k, None) for k in trade_keys} for dct in lst]
         except Exception as e:
             logging.error(f"{e} while getting orders")
             print_exc()
@@ -143,7 +158,6 @@ if __name__ == "__main__":
     import pickle
     import pandas as pd
     from constants import S_DATA
-    from jsondb import Jsondb
 
     with open("../data/AQD468.pkl", "rb") as pkl:
         obj = pickle.load(pkl)
