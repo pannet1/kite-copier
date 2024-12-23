@@ -12,7 +12,6 @@ class Strategy:
                 values = self._bands.strip("[]").split()
                 self._bands = np.array([float(value) for value in values])
             self._current_target = int(self._current_target)
-            self._ltp = float(self._ltp)
         else:
             # settings
             threshold = O_SETG["trade"]["threshold"]
@@ -108,7 +107,10 @@ class Strategy:
         try:
             Flag = False
             for order in self._orders:
-                if self._sell_order == order["order_id"]:
+                if (
+                    self._sell_order == order["order_id"]
+                    and order["status"] == "COMPLETE"
+                ):
                     logging.info(f"{self._symbol} order {self._sell_order} is complete")
                     Flag = True
                     break
