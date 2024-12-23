@@ -33,7 +33,7 @@ class Strategy:
             # Generate bands (merging initial bands)
             self._bands = np.concatenate(
                 (
-                    [self._fill_price - self._threshold * 2],
+                    [self._fill_price - (self._fill_price * 10 / 100)],
                     np.linspace(
                         self._fill_price + self._threshold,
                         self._fill_price + self._targets * self._threshold,
