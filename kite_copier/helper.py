@@ -110,6 +110,7 @@ class Helper:
                 "quantity",
                 "side",
                 "status",
+                "symbol",
             ]
             lst = []
             lst = cls._api.orders
